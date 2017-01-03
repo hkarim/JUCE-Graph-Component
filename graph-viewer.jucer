@@ -5,10 +5,36 @@
               jucerVersion="4.3.0">
   <MAINGROUP id="jq4deN" name="graph-viewer">
     <GROUP id="{2AAAEFA1-6B69-E269-A582-D0DD4205312C}" name="Source">
-      <FILE id="zOc5g3" name="MainComponent.cpp" compile="1" resource="0"
-            file="Source/MainComponent.cpp"/>
-      <FILE id="W5u70Z" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
-      <FILE id="TAGyTz" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="lafbb9" name="EdgeComponent.cpp" compile="1" resource="0"
+            file="Source/EdgeComponent.cpp"/>
+      <FILE id="jCcQfR" name="EdgeComponent.h" compile="0" resource="0" file="Source/EdgeComponent.h"/>
+      <FILE id="NvwlW8" name="Graph.h" compile="0" resource="0" file="Source/Graph.h"/>
+      <FILE id="LCkiYk" name="GraphNodeEditor.h" compile="0" resource="0"
+            file="Source/GraphNodeEditor.h"/>
+      <FILE id="oeCRXh" name="GraphViewComponent.cpp" compile="1" resource="0"
+            file="Source/GraphViewComponent.cpp"/>
+      <FILE id="hRZzEL" name="GraphViewComponent.h" compile="0" resource="0"
+            file="Source/GraphViewComponent.h"/>
+      <FILE id="rwU6NQ" name="GraphViewTheme.h" compile="0" resource="0"
+            file="Source/GraphViewTheme.h"/>
+      <FILE id="Hqvifu" name="HostNodeComponent.cpp" compile="1" resource="0"
+            file="Source/HostNodeComponent.cpp"/>
+      <FILE id="HtGr5w" name="HostNodeComponent.h" compile="0" resource="0"
+            file="Source/HostNodeComponent.h"/>
+      <FILE id="WxY2C8" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="g9NjlA" name="NodeComponent.cpp" compile="1" resource="0"
+            file="Source/NodeComponent.cpp"/>
+      <FILE id="iAs4ds" name="NodeComponent.h" compile="0" resource="0" file="Source/NodeComponent.h"/>
+      <FILE id="paphLo" name="SampleHostedComponents.h" compile="0" resource="0"
+            file="Source/SampleHostedComponents.h"/>
+      <FILE id="uNJcoN" name="SelectionComponent.cpp" compile="1" resource="0"
+            file="Source/SelectionComponent.cpp"/>
+      <FILE id="Zwiryb" name="SelectionComponent.h" compile="0" resource="0"
+            file="Source/SelectionComponent.h"/>
+      <FILE id="KEw8Ju" name="UnboundEdgeComponent.cpp" compile="1" resource="0"
+            file="Source/UnboundEdgeComponent.cpp"/>
+      <FILE id="FRpE2p" name="UnboundEdgeComponent.h" compile="0" resource="0"
+            file="Source/UnboundEdgeComponent.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
