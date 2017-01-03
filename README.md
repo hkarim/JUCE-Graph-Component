@@ -1,6 +1,6 @@
 ### JUCE Graph Component
 
-This is a [JUCE Framework](https://www.juce.com) set components that allows drawing a graph by connecting nodes and edges.
+This is a [JUCE Framework](https://www.juce.com) set of components that allows drawing a graph by connecting nodes and edges.
 
 <img src="https://github.com/hkarim/JUCE-Graph-Component/blob/master/Doc/ss-01.png">
 
