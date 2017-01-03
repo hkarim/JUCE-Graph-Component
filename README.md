@@ -32,7 +32,7 @@ The following steps is tested only on macOS:
 - If you are generating a project from the jucer file, make sure you setup the correct JUCE modules paths correctly
 
 ### License
-Same license as JUCE, I guess...
+MIT
 
 
 
