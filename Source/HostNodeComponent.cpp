@@ -37,7 +37,7 @@ void HostNodeComponent::resized() {
     NodeComponent::resized();
 }
 
-void HostNodeComponent::onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) {
+void HostNodeComponent::onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) {
     editor->onData(sourceNode, sourcePin, data);
 };
 

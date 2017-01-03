@@ -5,38 +5,8 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include <boost/variant.hpp>
 
 struct Graph {
-    
-    struct Data {
-        
-        using DataType = boost::variant<double, std::string>;
-        const DataType value;
-        
-        
-        struct DoubleData : public boost::static_visitor<double> {
-            double operator()(double value) const { return value; }
-            double operator()(const std::string& value) const { return 0.0f; }
-        };
-        
-        
-        struct StringData : public boost::static_visitor<std::string> {
-            std::string operator()(double value) const { return std::to_string(value); }
-            std::string operator()(const std::string& value) const { return value; }
-        };
-        
-        
-        const double doubleValue() const {
-            return boost::apply_visitor(DoubleData(), value);
-        }
-        
-        const std::string stringValue() const {
-            return boost::apply_visitor(StringData(), value);
-        }
-
-    };
-    
     
     enum class PinType;
     struct Pin;
@@ -45,7 +15,7 @@ struct Graph {
     
     struct NodeListener {
         virtual ~NodeListener() {}
-        virtual void onData(const Node* sourceNode, const Pin* sourcePin, const Data& data) {}
+        virtual void onData(const Node* sourceNode, const Pin* sourcePin, const var& data) {}
     };
     
     std::vector<std::unique_ptr<Node>> nodes;
@@ -63,7 +33,7 @@ struct Graph {
             
         }
         
-        void flow(const Data& data) const {
+        void flow(const var& data) const {
             if (pinType == PinType::In) {
                 //printf("[flow] in-pin:%d data:%s\n", order, data.stringValue.c_str());
                 node->flow(this, data);
@@ -107,7 +77,7 @@ struct Graph {
             }
         }
         
-        void flow(const Pin* source, const Data& data) const {
+        void flow(const Pin* source, const var& data) const {
             
             for (auto& l : listeners) l->onData(this, source, data);
             
@@ -115,7 +85,7 @@ struct Graph {
             
         }
         
-        void publish(const Data& data) const {
+        void publish(const var& data) const {
             //printf("[publish] node:%s data:%s\n", name.c_str(), data.stringValue.c_str());
             for (auto& p : outs) {
                 p->flow(data);

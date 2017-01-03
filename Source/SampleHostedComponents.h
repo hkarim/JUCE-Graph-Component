@@ -7,7 +7,7 @@ struct TextPanel : public Component, public GraphNodeEditor {
     
     Graph::Node* model;
     
-    std::string text = "I am a hosted component";
+    String text = "I am a hosted component";
     
     TextPanel() { }
     
@@ -26,8 +26,8 @@ struct TextPanel : public Component, public GraphNodeEditor {
         this->model = model;
     }
     
-    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) override {
-        text = data.stringValue();
+    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) override {
+        text = data.toString();
         repaint();
     }
     
@@ -72,14 +72,13 @@ struct SliderPanel : public Component, public GraphNodeEditor, public Slider::Li
         this->model = model;
     }
     
-    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) override {
-        slider.setValue(data.doubleValue());
+    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) override {
+        slider.setValue(data);
     }
     
     void sliderValueChanged(Slider* slider) override {
         if (model) {
-            Graph::Data data { slider->getValue() };
-            model->publish(data);
+            model->publish(slider->getValue());
         }
     }
     
@@ -95,7 +94,7 @@ struct OutListener : public Graph::NodeListener {
     
     Graph::Node* outsideWorld;
     
-    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) {
+    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) {
         if (outsideWorld) outsideWorld->publish(data);
     }
 };
@@ -190,7 +189,7 @@ struct EmbeddedGraphView : public GraphNodeEditor {
         listener->outsideWorld = model;
     }
     
-    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) override {
+    void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) override {
         in->model->publish(data);
     }
     

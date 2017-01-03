@@ -12,6 +12,6 @@ public:
     
     virtual void setModel(Graph::Node* model) {}
     
-    virtual void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) {}
+    virtual void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) {}
     
 };
