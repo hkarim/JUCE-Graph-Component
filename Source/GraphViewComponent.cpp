@@ -90,7 +90,7 @@ void GraphViewComponent::removeNode(NodeComponent* n) {
     }
     
     
-    auto ref = std::find_if(std::begin(nodes), std::end(nodes), [&](auto& current) -> bool { return current.get() == n; });
+    auto ref = std::remove_if(std::begin(nodes), std::end(nodes), [&](auto& current) -> bool { return current.get() == n; });
     
     if (ref != nodes.end()) {
         auto n = (*ref).get();
@@ -122,7 +122,7 @@ EdgeComponent* GraphViewComponent::addEdge(NodeComponent::PinComponent* source, 
 
 void GraphViewComponent::removeEdge(EdgeComponent* e) {
     e->removeMouseListener(mouseListener.get());
-    auto ref = std::find_if(std::begin(edges), std::end(edges), [&](auto& current) -> bool { return current.get() == e; });
+    auto ref = std::remove_if(std::begin(edges), std::end(edges), [&](auto& current) -> bool { return current.get() == e; });
     
     if (ref != edges.end()) {
         auto e = (*ref).get();

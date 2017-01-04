@@ -109,6 +109,10 @@ struct EmbeddedGraphView : public GraphNodeEditor {
         View() {
             theme.initialScaleFactor = 0.7f;
         }
+        
+        ~View() {
+            
+        }
         void popupMenu(const MouseEvent& e) override {
             PopupMenu m;
             auto position = e.getMouseDownPosition().toFloat();
@@ -133,7 +137,6 @@ struct EmbeddedGraphView : public GraphNodeEditor {
                 nodeEditors.push_back(std::move(editor));
                 addHostNode(ptr, 1, 0, 200, 100, position);
             };
-            
             
             
             switch (selection) {
