@@ -135,8 +135,8 @@ void GraphViewComponent::removeEdge(EdgeComponent* e) {
 }
 
 void GraphViewComponent::assertions() const {
-    assert(graph->edges.size() == edges.size());
-    assert(graph->nodes.size() == nodes.size());
+    jassert(graph->edges.size() == edges.size());
+    jassert(graph->nodes.size() == nodes.size());
 }
 
 

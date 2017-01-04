@@ -16,7 +16,7 @@ public:
     
     void resized() override;
     
-    virtual void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const Graph::Data& data) override;
+    virtual void onData(const Graph::Node* sourceNode, const Graph::Pin* sourcePin, const var& data) override;
     
 private:
     

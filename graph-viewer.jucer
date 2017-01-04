@@ -49,31 +49,30 @@
         <MODULEPATH id="juce_graphics" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
         <MODULEPATH id="juce_data_structures" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
         <MODULEPATH id="juce_gui_basics" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_cryptography" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_video" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_opengl" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_audio_basics" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_audio_devices" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_audio_formats" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
-        <MODULEPATH id="juce_audio_processors" path="../../../../Source/juce/JUCE-4.3.0/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
+    <VS2015 targetFolder="Builds/VisualStudio2015">
+      <CONFIGURATIONS>
+        <CONFIGURATION name="Debug" winWarningLevel="4" generateManifest="1" winArchitecture="32-bit"
+                       isDebug="1" optimisation="1" targetName="graph-viewer"/>
+        <CONFIGURATION name="Release" winWarningLevel="4" generateManifest="1" winArchitecture="32-bit"
+                       isDebug="0" optimisation="3" targetName="graph-viewer"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_gui_basics" path="..\JUCE\modules"/>
+        <MODULEPATH id="juce_graphics" path="..\JUCE\modules"/>
+        <MODULEPATH id="juce_events" path="..\JUCE\modules"/>
+        <MODULEPATH id="juce_data_structures" path="..\JUCE\modules"/>
+        <MODULEPATH id="juce_core" path="..\JUCE\modules"/>
+      </MODULEPATHS>
+    </VS2015>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="1"/>
-    <MODULE id="juce_video" showAllCode="1" useLocalCopy="1"/>
   </MODULES>
   <JUCEOPTIONS/>
 </JUCERPROJECT>
