@@ -24,14 +24,14 @@ The component is inspired by the `plugin host demo` application that comes with 
 
 ### Building
 
-The following steps is tested only on macOS:
+The following steps are tested only on macOS:
 
 - You will need a C++14 compiler
-- `boost::variant` must be on the headers search path
 - Use the provided `graph-viewer.jucer` to generate a project for your platform or use the provided XCode project
 - If you are generating a project from the jucer file, make sure you setup the correct JUCE modules paths correctly
 
 ### License
+
 MIT
 
 
