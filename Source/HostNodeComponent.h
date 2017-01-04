@@ -6,9 +6,9 @@
 class HostNodeComponent : public NodeComponent {
 
 public:
-    GraphNodeEditor* editor;
+    std::unique_ptr<GraphNodeEditor> editor;
     
-    HostNodeComponent(const GraphViewTheme& theme, Graph::Node* model, GraphNodeEditor* editor);
+    HostNodeComponent(const GraphViewTheme& theme, Graph::Node* model, std::unique_ptr<GraphNodeEditor> editor);
     
     ~HostNodeComponent();
     

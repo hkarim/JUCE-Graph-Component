@@ -2,10 +2,10 @@
 #include "HostNodeComponent.h"
 
 
-HostNodeComponent::HostNodeComponent(const GraphViewTheme& theme, Graph::Node* model, GraphNodeEditor* editor) :
-NodeComponent(theme, model), editor(editor) {
+HostNodeComponent::HostNodeComponent(const GraphViewTheme& theme, Graph::Node* model, std::unique_ptr<GraphNodeEditor> editor) :
+NodeComponent(theme, model), editor(std::move(editor)) {
     
-    editor->setModel(model);
+    this->editor->setModel(model);
     
 }
 

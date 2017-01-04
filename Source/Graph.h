@@ -73,7 +73,7 @@ struct Graph {
         void removeListener(NodeListener* listener) {
             auto removeItr = std::remove_if(std::begin(listeners), std::end(listeners), [&](auto& current) -> bool { return current == listener; });
             if (removeItr != std::end(listeners)) {
-                listeners.erase(removeItr);
+                listeners.erase(removeItr, std::end(listeners));
             }
         }
         
@@ -126,7 +126,7 @@ struct Graph {
         
         // remove the node
         auto removeItr = std::remove_if(std::begin(nodes), std::end(nodes), [&](auto& current) -> bool { return current.get() == node; });
-        nodes.erase(removeItr);
+        nodes.erase(removeItr, std::end(nodes));
         //report();
     }
     
@@ -146,7 +146,7 @@ struct Graph {
         //       edge->target->node->name.c_str(),
         //       edge->target->order);
         auto removeItr = std::remove_if(std::begin(edges), std::end(edges), [&](auto& current) -> bool { return current.get() == edge; } );
-        edges.erase(removeItr);
+        edges.erase(removeItr, std::end(edges));
         //report();
     }
     

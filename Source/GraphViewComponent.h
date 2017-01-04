@@ -93,7 +93,7 @@ public:
                            const int outs,
                            const Point<float> position = Point<float>(0,0));
     HostNodeComponent* addHostNode(
-                                   GraphNodeEditor* editor,
+                                   std::unique_ptr<GraphNodeEditor> editor,
                                    const int ins,
                                    const int outs,
                                    const int width,

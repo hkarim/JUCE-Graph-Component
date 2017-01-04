@@ -50,14 +50,14 @@ NodeComponent* GraphViewComponent::addNode(const std::string& name,
     return ptr;
 }
 
-HostNodeComponent* GraphViewComponent::addHostNode(GraphNodeEditor* editor,
+HostNodeComponent* GraphViewComponent::addHostNode(std::unique_ptr<GraphNodeEditor> editor,
                                                    const int ins,
                                                    const int outs,
                                                    const int width,
                                                    const int height,
                                                    const Point<float> position) {
     const auto model = graph->addNode("GraphNodeEditor", ins, outs);
-    auto node = std::make_unique<HostNodeComponent>(theme, model, editor);
+    auto node = std::make_unique<HostNodeComponent>(theme, model, std::move(editor));
     node->setBounds(0, 0, width, height);
     node->translation = AffineTransform::translation(position);
     node->scale = AffineTransform::scale(theme.initialScaleFactor);
@@ -92,11 +92,11 @@ void GraphViewComponent::removeNode(NodeComponent* n) {
     
     auto ref = std::remove_if(std::begin(nodes), std::end(nodes), [&](auto& current) -> bool { return current.get() == n; });
     
-    if (ref != nodes.end()) {
+    if (ref != std::end(nodes)) {
         auto n = (*ref).get();
         graph->removeNode(n->model);
         removeChildComponent(n);
-        nodes.erase(ref);
+        nodes.erase(ref, std::end(nodes));
     }
     
     assertions();
@@ -124,11 +124,11 @@ void GraphViewComponent::removeEdge(EdgeComponent* e) {
     e->removeMouseListener(mouseListener.get());
     auto ref = std::remove_if(std::begin(edges), std::end(edges), [&](auto& current) -> bool { return current.get() == e; });
     
-    if (ref != edges.end()) {
+    if (ref != std::end(edges)) {
         auto e = (*ref).get();
         graph->removeEdge(e->model);
         removeChildComponent(e);
-        edges.erase(ref);
+        edges.erase(ref, std::end(edges));
     }
     
     assertions();

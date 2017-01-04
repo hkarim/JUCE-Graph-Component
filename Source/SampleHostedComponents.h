@@ -104,14 +104,13 @@ struct EmbeddedGraphView : public GraphNodeEditor {
     
     struct View : public GraphViewComponent {
         
-        std::vector<std::unique_ptr<GraphNodeEditor>> nodeEditors;
         
         View() {
             theme.initialScaleFactor = 0.7f;
         }
         
         ~View() {
-            
+            //printf("nodes: %lu, edges:%lu\n", nodes.size(), edges.size());
         }
         void popupMenu(const MouseEvent& e) override {
             PopupMenu m;
@@ -125,17 +124,11 @@ struct EmbeddedGraphView : public GraphNodeEditor {
             auto selection = m.show();
             
             auto sliderPanel = [&]() {
-                auto editor = std::make_unique<SliderPanel>();
-                auto ptr = editor.get();
-                nodeEditors.push_back(std::move(editor));
-                addHostNode(ptr, 1, 1, 150, 150, position);
+                addHostNode(std::make_unique<SliderPanel>(), 1, 1, 150, 150, position);
             };
             
             auto textPanel = [&]() {
-                auto editor = std::make_unique<TextPanel>();
-                auto ptr = editor.get();
-                nodeEditors.push_back(std::move(editor));
-                addHostNode(ptr, 1, 0, 200, 100, position);
+                addHostNode(std::make_unique<TextPanel>(), 1, 0, 200, 100, position);
             };
             
             
@@ -201,8 +194,6 @@ struct EmbeddedGraphView : public GraphNodeEditor {
 
 struct CustomGraphView : public GraphViewComponent {
     
-    std::vector<std::unique_ptr<GraphNodeEditor>> nodeEditors;
-    
     void popupMenu(const MouseEvent& e) override {
         PopupMenu m;
         auto position = e.getMouseDownPosition().toFloat();
@@ -216,24 +207,15 @@ struct CustomGraphView : public GraphViewComponent {
         auto selection = m.show();
         
         auto sliderPanel = [&]() {
-            auto editor = std::make_unique<SliderPanel>();
-            auto ptr = editor.get();
-            nodeEditors.push_back(std::move(editor));
-            addHostNode(ptr, 1, 1, 150, 150, position);
+            addHostNode(std::make_unique<SliderPanel>(), 1, 1, 150, 150, position);
         };
         
         auto textPanel = [&]() {
-            auto editor = std::make_unique<TextPanel>();
-            auto ptr = editor.get();
-            nodeEditors.push_back(std::move(editor));
-            addHostNode(ptr, 1, 0, 200, 100, position);
+            addHostNode(std::make_unique<TextPanel>(), 1, 0, 200, 100, position);
         };
         
         auto embeddedGraphView = [&]() {
-            auto editor = std::make_unique<EmbeddedGraphView>();
-            auto ptr = editor.get();
-            nodeEditors.push_back(std::move(editor));
-            addHostNode(ptr, 1, 1, 400, 400, position);
+            addHostNode(std::make_unique<EmbeddedGraphView>(), 1, 1, 400, 400, position);
         };
         
         
