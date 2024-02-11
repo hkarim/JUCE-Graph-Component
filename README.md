@@ -21,16 +21,14 @@ The component is inspired by the `plugin host demo` application that comes with 
 ### Demo Plugin - HKGraphMidi
 
 - All the features of the component backed in a VST3 plugin
+- Right-click on the demo window to add example nodes, and drag pins to create edges
 - Sample MIDI processors including a note transposer, channel splitter, channel router, on-screen keyboard, etc.
 - Saving and loading plugin state is also supported
 
 ### Demo Application - HKGraphApp
 
+- Standalone demo application, with example non-audio processors
 - Right-click on the demo window to add example nodes, and drag pins to create edges
-- Click and drag on the window to select multiple nodes and edges
-- To scale a node, select it and hit `cmd + '+'`, `cmd + '-'` or `cmd + '0'`
-- Delete a node or edge by selecting it and hit delete or backspace
-- Duplicate a node using `cmd + 'd'`, duplicating host nodes is not supported yet
 
 ### Building
 
