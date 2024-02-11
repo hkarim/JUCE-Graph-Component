@@ -3,7 +3,7 @@
 This is a [JUCE Framework](https://www.juce.com) set of components that allows drawing a graph by connecting nodes and edges.
 The component is inspired by the `plugin host demo` application that comes with JUCE, but this one is a different implementation.
 
-<img src="https://github.com/hkarim/JUCE-Graph-Component/blob/master/Doc/ss-plugin-01.png">
+<img src="https://github.com/hkarim/JUCE-Graph-Component/blob/main/Doc/ss-plugin-01.png">
 
 ### Features
 
