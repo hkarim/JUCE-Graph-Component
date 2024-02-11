@@ -8,6 +8,17 @@ cmake_minimum_required(VERSION 3.15)
 
 project(HKPlugins VERSION 0.0.1)
 
+# on macOS Sonoma and LLVM Clang 17.0.6, CMake invokes `ar` and `ranlib` under `/usr/bin` which causes corrupt libs.
+# force the use of `llvm-ar` and `llvm-ranlib` if we are using LLVM
+# export LLVM=$(brew --prefix llvm)
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    message("LLVM : $ENV{LLVM}")
+    set(CMAKE_AR "$ENV{LLVM}/bin/llvm-ar" CACHE FILEPATH "LLVM ar" FORCE)
+    set(CMAKE_RANLIB "$ENV{LLVM}/bin/llvm-ranlib" CACHE FILEPATH "LLVM ranlib" FORCE)
+    message("AR : ${CMAKE_AR}")
+    message("RANLIB : ${CMAKE_RANLIB}")
+endif ()
+
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 20)
 
