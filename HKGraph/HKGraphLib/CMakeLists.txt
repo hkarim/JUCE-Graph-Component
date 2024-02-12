@@ -13,5 +13,3 @@ target_sources(HKGraphLib
         Source/Graph.h
         Source/Graph.cpp
 )
-
-#target_link_libraries(HKGraphLib)

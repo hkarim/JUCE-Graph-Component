@@ -20,7 +20,6 @@ bool EdgeComponent::hitTest(int x, int y) {
   return distance < 5;
 }
 
-
 void EdgeComponent::paint(juce::Graphics &g) {
   auto w = static_cast<float>(getWidth());
   auto h = static_cast<float>(getHeight());
