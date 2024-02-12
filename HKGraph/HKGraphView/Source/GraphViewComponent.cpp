@@ -209,7 +209,7 @@ void GraphViewComponent::drawConnector(NodeComponent::PinComponent *pin) {
     edgeDrawer->endPin = pin;
     if (isLegalEdge(edgeDrawer->startPin, edgeDrawer->endPin)) {
       if (edgeDrawer->startPin->model.m_kind == Graph::Node::PinKind::Out &&
-      edgeDrawer->endPin->model.m_kind== Graph::Node::PinKind::In) {
+          edgeDrawer->endPin->model.m_kind == Graph::Node::PinKind::In) {
         addEdge(edgeDrawer->startPin, edgeDrawer->endPin);
       } else {
         addEdge(edgeDrawer->endPin, edgeDrawer->startPin);
@@ -310,6 +310,32 @@ void GraphViewComponent::edgeMouseDown(EdgeComponent *edge, const juce::MouseEve
   }
 }
 
+void GraphViewComponent::edgeMouseDrag(EdgeComponent *edge, const juce::MouseEvent &e) {
+  auto relativeEvent = e.getEventRelativeTo(this);
+  auto position = relativeEvent.getPosition();
+  if (!edge->dragging) {
+    edge->dragging = true;
+    edge->distanceFromStart = position.getDistanceFrom(getLocalPoint(edge->startPin, edge->startPin->getPosition()));
+    edge->distanceFromEnd = position.getDistanceFrom(getLocalPoint(edge->endPin, edge->endPin->getPosition()));
+    edgeDrawer->currentEndPosition = position;
+    removeChildComponent(edge);
+  }
+  if (edge->distanceFromStart <= edge->distanceFromEnd) {
+    pinMouseDrag(edge->endPin, relativeEvent);
+  } else {
+    pinMouseDrag(edge->startPin, relativeEvent);
+  }
+}
+
+void GraphViewComponent::edgeMouseUp(EdgeComponent *edge, const juce::MouseEvent &e) {
+  if (edge->dragging) {
+    removeChildComponent(edgeDrawer.get());
+    // simulate a double click, which will remove the edge along with the graph edge model
+    edgeMouseDoubleClick(edge, e);
+  }
+  assertions();
+}
+
 void GraphViewComponent::calculateEdgeBounds(EdgeComponent *edge) {
 
   auto startPin = edge->startPin;
@@ -332,10 +358,6 @@ void GraphViewComponent::calculateEdgeBounds(EdgeComponent *edge) {
   edge->inverted = left != startPinTopLeft.x;
 
   edge->setBounds(left, top, w, h);
-}
-
-void GraphViewComponent::edgeMouseUp(EdgeComponent *edge, const juce::MouseEvent &mouseEvent) {
-  juce::ignoreUnused(edge, mouseEvent);
 }
 
 void GraphViewComponent::edgeMouseDoubleClick(EdgeComponent *edge, const juce::MouseEvent &e) {
@@ -433,27 +455,27 @@ bool GraphViewComponent::keyPressed(const juce::KeyPress &key) {
   if (code == juce::KeyPress::deleteKey || code == juce::KeyPress::backspaceKey) {
     removeSelected();
   }
-  // cmd '0'
+    // cmd '0'
   else if (code == 48 && commandDown) {
     zoomToOriginalSize();
   }
-  // cmd '+' or cmd '='
+    // cmd '+' or cmd '='
   else if ((code == 43 || code == 61) && commandDown) {
     zoomIn();
   }
-  // cmd '-'
+    // cmd '-'
   else if (code == 45 && commandDown) {
     zoomOut();
   }
-  // cmd 'a'
+    // cmd 'a'
   else if (code == 65 && commandDown) {
     selectAll();
   }
-  // cmd 'd'
+    // cmd 'd'
   else if (code == 68 && commandDown) {
     duplicate();
   }
-  // cmd 'm'
+    // cmd 'm'
   else if (code == 77 && commandDown) {
     mute();
   }

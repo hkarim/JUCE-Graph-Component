@@ -7,17 +7,20 @@
 class EdgeComponent : public juce::Component {
 public:
   GraphViewTheme theme;
-  const NodeComponent::PinComponent *startPin;
-  const NodeComponent::PinComponent *endPin;
+  NodeComponent::PinComponent *startPin;
+  NodeComponent::PinComponent *endPin;
   Graph::Edge model;
   juce::Path path;
   bool inverted = false;
   bool selected = false;
+  bool dragging = false;
+  int distanceFromStart{};
+  int distanceFromEnd{};
 
   EdgeComponent(
     const GraphViewTheme &theme,
-    const NodeComponent::PinComponent *startPin,
-    const NodeComponent::PinComponent *endPin,
+    NodeComponent::PinComponent *startPin,
+    NodeComponent::PinComponent *endPin,
     Graph::Edge graphEdge);
 
   ~EdgeComponent() override;

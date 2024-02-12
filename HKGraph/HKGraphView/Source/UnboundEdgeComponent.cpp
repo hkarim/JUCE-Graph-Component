@@ -22,7 +22,6 @@ void UnboundEdgeComponent::paint(juce::Graphics &g) {
   juce::Path path;
 
   path.startNewSubPath(pstart.x, pstart.y);
-  //path.lineTo(pend.x, pend.y);
   if (inverted) {
     path.cubicTo(w, h * 0.5f, 0.0f, h * 0.5f, pend.x, pend.y);
   } else {
@@ -37,7 +36,6 @@ void UnboundEdgeComponent::paint(juce::Graphics &g) {
 }
 
 void UnboundEdgeComponent::calculateBounds(const juce::Point<int> &start, const juce::Point<int> &end) {
-
   auto offset = end - start;
   auto w = abs(offset.x);
   auto h = abs(offset.y);

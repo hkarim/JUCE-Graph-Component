@@ -360,8 +360,6 @@ void AudioPluginAudioProcessor::restoreState() {
   }
 
   recoverMidiInOut();
-  graph->debug();
-
 }
 
 void AudioPluginAudioProcessor::recoverMidiInOut() {

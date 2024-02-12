@@ -2,8 +2,8 @@
 
 EdgeComponent::EdgeComponent(
   const GraphViewTheme &viewTheme,
-  const NodeComponent::PinComponent *from,
-  const NodeComponent::PinComponent *to,
+  NodeComponent::PinComponent *from,
+  NodeComponent::PinComponent *to,
   Graph::Edge graphEdge) :
   theme(viewTheme),
   startPin(from),

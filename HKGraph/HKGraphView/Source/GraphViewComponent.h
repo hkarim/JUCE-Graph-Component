@@ -50,6 +50,8 @@ public:
         view->nodeMouseDrag(node, e);
       } else if (auto pin = dynamic_cast<NodeComponent::PinComponent *>(e.originalComponent)) {
         view->pinMouseDrag(pin, e);
+      }  else if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
+        view->edgeMouseDrag(edge, e);
       }
     }
 
@@ -121,6 +123,8 @@ public:
   void calculateEdgeBounds(EdgeComponent *edge);
 
   void edgeMouseDown(EdgeComponent *edge, const juce::MouseEvent &e);
+
+  void edgeMouseDrag(EdgeComponent *edge, const juce::MouseEvent &e);
 
   void edgeMouseUp(EdgeComponent *edge, const juce::MouseEvent &e);
 

@@ -401,7 +401,6 @@ struct GraphEditor : public GraphViewComponent {
   ~GraphEditor() override = default;
 
   void popupMenu(const juce::MouseEvent &e) override {
-    graph->debug();
     juce::ignoreUnused(e);
     juce::PopupMenu m;
     m.addItem(1, "1 x 1");
