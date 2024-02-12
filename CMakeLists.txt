@@ -21,6 +21,8 @@ endif ()
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 20)
+# disable some JUCE objective-c code warnings
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-receiver-forward-class -Wno-objc-method-access")
 
 # uncomment the following line if you have checked out JUCE locally in the current directory
 #add_subdirectory(JUCE)
