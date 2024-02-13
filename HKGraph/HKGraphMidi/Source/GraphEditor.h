@@ -6,11 +6,12 @@
 #include "NodeProcessor.h"
 #include "MidiInNodeProcessor.h"
 #include "MidiOutNodeProcessor.h"
-#include "ChannelSplitterNodeProcessor.h"
+#include "ChannelSplitterProcessor.h"
 #include "ConstrainedComponent.h"
 #include "ChannelRouterProcessor.h"
 #include "TransposeProcessor.h"
 #include "KeyboardProcessor.h"
+#include "CurveProcessor.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;
@@ -109,6 +110,7 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(2, "channel-splitter");
     m.addItem(3, "channel-router");
     m.addItem(4, "keyboard");
+    m.addItem(5, "velocity-curve");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -116,13 +118,16 @@ struct GraphEditor : public GraphViewComponent {
           addHostNode(new TransposeProcessor(graph, "transpose", 1, 1), 150, 150, position);
           break;
         case 2:
-          addNode(new ChannelSplitterNodeProcessor(graph, "channel-splitter", 1, 16), position);
+          addNode(new ChannelSplitterProcessor(graph, "channel-splitter", 1, 16), position);
           break;
         case 3:
           addHostNode(new ChannelRouterProcessor(graph, "channel-router", 1, 1), 150, 150, position);
           break;
         case 4:
           addHostNode(new KeyboardProcessor(graph, "keyboard", 1, 1), 400, 100, position);
+          break;
+        case 5:
+          addHostNode(new VelocityCurveProcessor(graph, "velocity-curve", 1, 1), 300, 300, position);
           break;
         default:
           break;

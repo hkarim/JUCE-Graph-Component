@@ -38,6 +38,7 @@ target_sources(HKGraphMidi
         Source/KeyboardProcessor.cpp
         Source/TransposeProcessor.cpp
         Source/ChannelRouterProcessor.cpp
+        Source/CurveProcessor.cpp
         Source/PluginEditor.cpp
         Source/PluginProcessor.cpp)
 

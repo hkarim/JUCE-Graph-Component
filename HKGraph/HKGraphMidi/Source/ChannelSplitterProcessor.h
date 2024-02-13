@@ -3,21 +3,21 @@
 #include "Graph.h"
 #include "Processors.h"
 
-struct ChannelSplitterNodeProcessor : public NodeProcessor {
+struct ChannelSplitterProcessor : public NodeProcessor {
   std::unordered_map<int, uuid> m_ordered_pins;
 
-  explicit ChannelSplitterNodeProcessor(Graph *graph) :
+  explicit ChannelSplitterProcessor(Graph *graph) :
     NodeProcessor(graph) {
   }
 
-  ChannelSplitterNodeProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
+  ChannelSplitterProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
     : NodeProcessor(graph, name, n_ins, n_outs) {
     for (auto &[id, p]: m_outs) {
       m_ordered_pins[static_cast<int>(p.m_order)] = id;
     }
   }
 
-  ~ChannelSplitterNodeProcessor() override = default;
+  ~ChannelSplitterProcessor() override = default;
 
   void
   on_data(Graph *graph, const std::optional<const Node::Pin> &pin, Data &data) override {
@@ -55,7 +55,7 @@ struct ChannelSplitterNodeProcessor : public NodeProcessor {
   }
 
   NodeProcessor *clone() override {
-    auto c = new ChannelSplitterNodeProcessor(
+    auto c = new ChannelSplitterProcessor(
       m_graph,
       m_name,
       static_cast<uint32_t>(m_ins.size()),

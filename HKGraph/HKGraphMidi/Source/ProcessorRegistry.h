@@ -3,11 +3,12 @@
 #include "Processors.h"
 #include "PassthroughProcessor.h"
 #include "ChannelRouterProcessor.h"
-#include "ChannelSplitterNodeProcessor.h"
+#include "ChannelSplitterProcessor.h"
 #include "KeyboardProcessor.h"
 #include "MidiInNodeProcessor.h"
 #include "MidiOutNodeProcessor.h"
 #include "TransposeProcessor.h"
+#include "CurveProcessor.h"
 
 struct ProcessorRegistry {
 
@@ -22,11 +23,13 @@ struct ProcessorRegistry {
     else if (typeId ==  Processors::channelRouterProcessor)
       nodeProcessor = new ChannelRouterProcessor(graph);
     else if (typeId ==  Processors::channelSplitterNodeProcessor)
-      nodeProcessor = new ChannelSplitterNodeProcessor(graph);
+      nodeProcessor = new ChannelSplitterProcessor(graph);
     else if (typeId ==  Processors::keyboardProcessor)
       nodeProcessor = new KeyboardProcessor(graph);
     else if (typeId == Processors::transposeProcessor)
       nodeProcessor = new TransposeProcessor(graph);
+    else if (typeId == Processors::velocityCurveProcessor)
+      nodeProcessor = new VelocityCurveProcessor(graph);
 
     return nodeProcessor;
   }
