@@ -75,7 +75,7 @@ struct KeyboardPanel : public ConstrainedComponent {
     : ConstrainedComponent(),
       processor(p),
       theme(viewTheme),
-      keyboardComponent(p->state, juce::MidiKeyboardComponent::Orientation::horizontalKeyboard) {
+      keyboardComponent(p->keyboardState, juce::MidiKeyboardComponent::Orientation::horizontalKeyboard) {
     m_constrains.setMinimumSize(400, 100);
     m_constrains.setMaximumHeight(100);
     addAndMakeVisible(keyboardComponent);

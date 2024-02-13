@@ -1,7 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
   : AudioProcessor(BusesProperties()
                      .withInput("Input", juce::AudioChannelSet::stereo(), true)
@@ -71,14 +70,20 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
   juce::ignoreUnused(index, newName);
 }
 
-//==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
-  juce::ignoreUnused(sampleRate, samplesPerBlock);
+  for (auto const &node : graph->m_nodes) {
+    if (auto p = dynamic_cast<PlaybackProcessor*>(node.second)) {
+      p->prepareToPlay(sampleRate, samplesPerBlock);
+    }
+  }
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
-  // When playback stops, you can use this as an opportunity to free up any
-  // spare memory, etc.
+  for (auto const &node : graph->m_nodes) {
+    if (auto p = dynamic_cast<PlaybackProcessor*>(node.second)) {
+      p->releaseResources();
+    }
+  }
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
@@ -106,7 +111,6 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages) {
-  buffer.clear();
   std::lock_guard<std::mutex> lock(graph->m_mutex);
 
   if (m_dirty) {
@@ -118,23 +122,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     m_dirty = false;
     midiOut->output.clear();
   } else {
-    Data input = std::make_any<juce::MidiBuffer &>(midiMessages);
+    Data input = std::make_any<Block>(buffer, midiMessages);
     midiIn->async_dispatch(graph, std::nullopt, input);
     midiMessages.swapWith(midiOut->output);
     midiOut->output.clear();
   }
-
+  buffer.clear();
 }
 
-//==============================================================================
 bool AudioPluginAudioProcessor::hasEditor() const {
-  return true; // (change this to false if you choose to not supply an editor)
+  return true;
 }
 
 juce::AudioProcessorEditor *AudioPluginAudioProcessor::createEditor() {
   return new AudioPluginAudioProcessorEditor(*this);
 }
-
 
 void AudioPluginAudioProcessor::saveState() {
   parameters.removeAllChildren(nullptr);
@@ -427,7 +429,6 @@ void AudioPluginAudioProcessor::assignMidiInOutDescriptors() {
   nodeDescriptors[midiOut->m_id] = std::move(midiOutDescriptor);
 }
 
-
 void AudioPluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData) {
   saveState();
   juce::MemoryOutputStream out{destData, false};
@@ -440,8 +441,6 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
   restoreState();
 }
 
-//==============================================================================
-// This creates new instances of the plugin..
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
   return new AudioPluginAudioProcessor();
 }

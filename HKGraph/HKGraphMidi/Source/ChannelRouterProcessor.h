@@ -19,12 +19,11 @@ struct ChannelRouterProcessor : public NodeProcessor {
 
   ~ChannelRouterProcessor() override = default;
 
-
   void
   on_data(Graph *graph, const std::optional<const Graph::Node::Pin> &pin, Data &data) override {
-    juce::ignoreUnused(graph, pin, data);
+    juce::ignoreUnused(pin);
     auto shift = m_parameter.value;
-    auto input = std::any_cast<juce::MidiBuffer &>(data);
+    auto input = std::any_cast<Block>(data);
     juce::MidiBuffer output;
     /////
     if (m_parameter.changed) {
@@ -34,12 +33,12 @@ struct ChannelRouterProcessor : public NodeProcessor {
       m_parameter.changed = false;
     }
     /////
-    for (auto m: input) {
+    for (auto m: input.midiBuffer) {
       auto message = m.getMessage();
       message.setChannel(shift);
       output.addEvent(message, m.samplePosition);
     }
-    Data outputData = std::make_any<juce::MidiBuffer>(output);
+    Data outputData = std::make_any<Block>(input.audioBuffer, output);
     for (auto &[_, p]: m_outs) {
       p.async_dispatch(graph, outputData);
     }

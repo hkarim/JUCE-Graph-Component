@@ -45,9 +45,9 @@ struct VelocityCurveProcessor : CurveProcessor {
   void
   on_data(Graph *graph, const std::optional<const Graph::Node::Pin> &pin, Data &data) override {
     juce::ignoreUnused(pin);
-    auto input = std::any_cast<juce::MidiBuffer &>(data);
+    auto input = std::any_cast<Block>(data);
     juce::MidiBuffer output;
-    for (auto m: input) {
+    for (auto m: input.midiBuffer) {
       auto message = m.getMessage();
       auto velocity = message.getVelocity(); // [0..127]
       auto computed = model.compute(velocity);
@@ -56,7 +56,7 @@ struct VelocityCurveProcessor : CurveProcessor {
       message.setVelocity(scaled);
       output.addEvent(message, m.samplePosition);
     }
-    Data result = std::make_any<juce::MidiBuffer &>(output);
+    Data result = std::make_any<Block>(input.audioBuffer, output);
     for (auto &[_, p]: m_outs) {
       p.on_data(graph, result);
     }

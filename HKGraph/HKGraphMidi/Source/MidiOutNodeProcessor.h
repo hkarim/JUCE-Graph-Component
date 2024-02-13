@@ -17,8 +17,8 @@ struct MidiOutNodeProcessor : public NodeProcessor {
   void
   on_data(Graph *graph, const std::optional<const Node::Pin> &pin, Data &data) override {
     juce::ignoreUnused(graph, pin);
-    auto input = std::any_cast<juce::MidiBuffer &>(data);
-    output.addEvents(input, 0, -1, 0);
+    auto input = std::any_cast<Block>(data);
+    output.addEvents(input.midiBuffer, 0, -1, 0);
   }
 
   [[nodiscard]] std::string typeId() const override {

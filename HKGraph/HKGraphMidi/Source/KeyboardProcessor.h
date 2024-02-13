@@ -1,27 +1,45 @@
 #pragma once
 #include "Processors.h"
 #include "NodeProcessor.h"
+#include "PlaybackProcessor.h"
 
-struct KeyboardProcessor : public NodeProcessor {
-  juce::MidiKeyboardState state{};
+struct KeyboardProcessor : public PlaybackProcessor {
+  juce::MidiKeyboardState keyboardState{};
+  juce::MidiMessageCollector keyboardMessageCollector;
 
   explicit KeyboardProcessor(Graph *graph) :
-    NodeProcessor(graph) {
+    PlaybackProcessor(graph) {
+    keyboardState.addListener(&keyboardMessageCollector);
   }
 
   KeyboardProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
-    : NodeProcessor(graph, name, n_ins, n_outs) {}
+    : PlaybackProcessor(graph, name, n_ins, n_outs) {
+    keyboardState.addListener(&keyboardMessageCollector);
+  }
 
-  ~KeyboardProcessor() override = default;
+  ~KeyboardProcessor() override {
+    keyboardState.removeListener(&keyboardMessageCollector);
+  }
+
+  void prepareToPlay(double playbackSampleRate, int playbackSamplesPerBlock) override {
+    PlaybackProcessor::prepareToPlay(playbackSampleRate, playbackSamplesPerBlock);
+    keyboardMessageCollector.reset(playbackSampleRate);
+  }
 
   void
   on_data(Graph *graph, const std::optional<const Graph::Node::Pin> &pin, Data &data) override {
     juce::ignoreUnused(pin);
-    auto input = std::any_cast<juce::MidiBuffer &>(data);
-    if (input.getNumEvents() > 0) {
-      state.processNextMidiBuffer(input, 0, input.getNumEvents(), true);
+    auto input = std::any_cast<Block>(data);
+    juce::MidiBuffer output;
+    if (!input.midiBuffer.isEmpty()) {
+      output.addEvents(input.midiBuffer, 0, -1, 0);
+      keyboardState.processNextMidiBuffer(output, 0, output.getNumEvents(), true);
+    }
+    keyboardMessageCollector.removeNextBlockOfMessages(output, input.audioBuffer.getNumSamples());
+    Data result = std::make_any<Block>(input.audioBuffer, output);
+    if (!output.isEmpty()) {
       for (auto &[_, p]: m_outs) {
-        p.async_dispatch(graph, data);
+        p.async_dispatch(graph, result);
       }
     }
   }

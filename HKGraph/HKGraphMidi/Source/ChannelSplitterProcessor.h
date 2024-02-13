@@ -22,9 +22,9 @@ struct ChannelSplitterProcessor : public NodeProcessor {
   void
   on_data(Graph *graph, const std::optional<const Node::Pin> &pin, Data &data) override {
     juce::ignoreUnused(pin);
-    auto buffer = std::any_cast<juce::MidiBuffer &>(data);
+    auto input = std::any_cast<Block>(data);
     std::unordered_map<int, juce::MidiBuffer> output;
-    for (auto m: buffer) {
+    for (auto m: input.midiBuffer) {
       output[m.getMessage().getChannel() - 1].addEvent(m.getMessage(), m.samplePosition);
     }
     for (auto &[index, channelOutput]: output) {
@@ -32,7 +32,7 @@ struct ChannelSplitterProcessor : public NodeProcessor {
       if (uuid_ptr != std::end(m_ordered_pins)) {
         auto pin_ptr = m_outs.find(uuid_ptr->second);
         if (pin_ptr != std::end(m_outs)) {
-          Data channelData = std::make_any<juce::MidiBuffer>(channelOutput);
+          Data channelData = std::make_any<Block>(input.audioBuffer, channelOutput);
           pin_ptr->second.async_dispatch(graph, channelData);
         }
       }

@@ -23,7 +23,7 @@ struct TransposeProcessor : public NodeProcessor {
     juce::ignoreUnused(pin);
     auto shift = m_parameter.value;
 
-    auto input = std::any_cast<juce::MidiBuffer &>(data);
+    auto input = std::any_cast<Block>(data);
     juce::MidiBuffer output;
     /////
     if (m_parameter.changed) {
@@ -33,8 +33,8 @@ struct TransposeProcessor : public NodeProcessor {
       m_parameter.changed = false;
     }
     /////
-    if (input.getNumEvents() > 0) {
-      for (auto m: input) {
+    if (input.midiBuffer.getNumEvents() > 0) {
+      for (auto m: input.midiBuffer) {
         auto message = m.getMessage();
         if (message.isNoteOn()) {
           output.addEvent(
@@ -55,9 +55,8 @@ struct TransposeProcessor : public NodeProcessor {
           output.addEvent(m.getMessage(), m.samplePosition);
         }
       }
-
     }
-    Data result = std::make_any<juce::MidiBuffer &>(output);
+    Data result = std::make_any<Block>(input.audioBuffer, output);
     for (auto &[_, p]: m_outs) {
       p.async_dispatch(graph, result);
     }

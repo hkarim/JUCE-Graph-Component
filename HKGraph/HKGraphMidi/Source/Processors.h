@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "JuceHeader.h"
 
 struct Processors {
   static const std::string midiInNodeProcessor;
@@ -10,4 +11,9 @@ struct Processors {
   static const std::string keyboardProcessor;
   static const std::string transposeProcessor;
   static const std::string velocityCurveProcessor;
+};
+
+struct Block {
+  juce::AudioBuffer<float> audioBuffer;
+  juce::MidiBuffer midiBuffer;
 };
