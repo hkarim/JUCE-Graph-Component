@@ -28,6 +28,7 @@ juce_add_plugin(HKGraphMidi
 
 target_include_directories(HKGraphMidi
         PUBLIC
+        ../External/Source
         ../HKGraphLib/Source
         ../HKGraphView/Source
 )

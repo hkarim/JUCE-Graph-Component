@@ -14,6 +14,7 @@ juce_add_gui_app(HKGraphApp
 
 target_include_directories(HKGraphApp
         PUBLIC
+        ../External/Source
         ../HKGraphLib/Source
         ../HKGraphView/Source
 )
