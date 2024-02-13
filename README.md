@@ -48,6 +48,11 @@ cmake --build cmake-build --config Release --target HKGraphApp
 
 Old implementation is now on the `legacy` branch
 
+### Credits
+
+- CurveEditor (slightly modified) [MIT] - [MIDI-Transformer](https://github.com/austensatterlee/MIDI-Transformer)
+- uuid [MIT] - [stduuid](https://github.com/mariusbancila/stduuid)
+
 ### License
 
 MIT
