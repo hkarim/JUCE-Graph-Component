@@ -15,3 +15,7 @@ juce::Component* TransposeProcessor::createEditor(const GraphViewTheme &theme) {
 juce::Component* KeyboardPanelProcessor::createEditor(const GraphViewTheme &theme) {
   return new KeyboardPanel(this, theme);
 }
+
+juce::Component* CurveProcessor::createEditor(const GraphViewTheme &theme) {
+  return new CurvePanel(this, theme);
+}

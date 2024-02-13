@@ -1,5 +1,6 @@
 #include "GraphViewComponent.h"
 #include "HostNodeComponent.h"
+#include "ConstrainedComponent.h"
 
 GraphViewComponent::GraphViewComponent(Graph *sharedGraph) : graph(sharedGraph) {
   selector = std::make_unique<SelectionComponent>(theme.cSelectionBackground);
@@ -446,6 +447,18 @@ void GraphViewComponent::mouseUp(const juce::MouseEvent &mouseEvent) {
   removeChildComponent(selector.get());
 }
 
+void GraphViewComponent::childBoundsChanged(juce::Component *child) {
+  if (auto host = dynamic_cast<HostNodeComponent*>(child)) {
+    if (host->editor) {
+      if (dynamic_cast<ConstrainedComponent*>(host->editor.get())) {
+        for (auto &[_, e]: edges) {
+          calculateEdgeBounds(e);
+          e->repaint();
+        }
+      }
+    }
+  }
+}
 
 bool GraphViewComponent::keyPressed(const juce::KeyPress &key) {
 

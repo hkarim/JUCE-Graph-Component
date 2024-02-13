@@ -4,6 +4,8 @@
 #include "Graph.h"
 #include "GraphViewComponent.h"
 #include "NodeProcessor.h"
+#include "CurveEditor.h"
+#include "ConstrainedComponent.h"
 
 struct PassthroughProcessor : public NodeProcessor {
 
@@ -136,7 +138,7 @@ struct RangeProcessor : public NodeProcessor, public IntRangeParameter::Listener
 struct TransposeProcessor : public RangeProcessor {
 
   TransposeProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
-    : RangeProcessor(graph, name, n_ins, n_outs, new IntRangeParameter(-24, 24, 1, 0)) {
+    : RangeProcessor(graph, name, n_ins, n_outs, new IntRangeParameter(0, 127, 1, 0)) {
   }
 
   ~TransposeProcessor() override = default;
@@ -167,7 +169,83 @@ struct TransposeProcessor : public RangeProcessor {
 
 };
 
-template <typename ValueType>
+struct CurveProcessor : public NodeProcessor {
+
+  ce::CurveEditorModel<float> model{0.0f, 127.0f, 0.0f, 127.0f};
+
+  CurveProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
+    : NodeProcessor(graph, name, n_ins, n_outs) {
+  }
+
+  ~CurveProcessor() override = default;
+
+  void
+  on_data(Graph *graph, const std::optional<const Graph::Node::Pin> &pin, Data &data) override {
+    juce::ignoreUnused(graph, pin);
+    auto input = std::any_cast<int>(data);
+    Data output = std::make_any<int>(static_cast<int>(model.compute(static_cast<float>(input))));
+    for (auto &[_, p]: m_outs) {
+      p.on_data(graph, output);
+    }
+  }
+
+  [[nodiscard]] std::string typeId() const override {
+    return "";
+  }
+
+  NodeProcessor *clone() override {
+    auto c =
+      new CurveProcessor(
+        m_graph,
+        m_name,
+        static_cast<std::uint32_t>(m_ins.size()),
+        static_cast<std::uint32_t>(m_outs.size()));
+    juce::ValueTree state{"curveState"};
+    for (size_t i = 0; i < model.nodes.size(); i++) {
+      const auto& node = model.nodes[i];
+      juce::Identifier id{"pt" + std::to_string (i)};
+      state.addChild (node->toValueTree (id), -1, nullptr);
+    }
+    c->model.fromValueTree(state);
+    return c;
+  }
+
+  juce::Component *createEditor(const GraphViewTheme &theme) override;
+
+};
+
+struct CurvePanel : public ConstrainedComponent {
+  CurveProcessor *processor;
+  GraphViewTheme theme;
+  ce::CurveEditor<float> editor;
+
+  CurvePanel(CurveProcessor *p, const GraphViewTheme &viewTheme)
+    : ConstrainedComponent(),
+      processor(p),
+      theme(viewTheme),
+      editor(p->model) {
+    m_constrains.setMinimumSize(200, 200);
+    addAndMakeVisible(editor);
+  }
+
+  ~CurvePanel() override = default;
+
+  void paint(juce::Graphics &g) override {
+    g.fillAll(juce::Colour(theme.cNodeBackground));
+  }
+
+  void resized() override {
+    auto bounds = getLocalBounds().reduced(10, 10);
+    auto w = static_cast<int>(bounds.toFloat().getWidth());
+    auto h = static_cast<int>(bounds.toFloat().getHeight());
+    editor.centreWithSize(w, h);
+  }
+
+private:
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CurvePanel)
+};
+
+template<typename ValueType>
 struct ValueProvider {
 
   struct Listener {
@@ -176,11 +254,11 @@ struct ValueProvider {
 
   ValueProvider() = default;
 
-  void add_listener(Listener* listener) {
+  void add_listener(Listener *listener) {
     m_listeners.add(listener);
   }
 
-  void remove_listener(Listener* listener) {
+  void remove_listener(Listener *listener) {
     m_listeners.remove(listener);
   }
 
@@ -325,7 +403,6 @@ struct SliderPanel : public juce::Component {
 
   void resized() override {
     auto bounds = getLocalBounds();
-    slider.setRange(1.0f, 16.0f, 1.0f);
     auto w = static_cast<int>(bounds.toFloat().getWidth() * 0.9f);
     auto h = static_cast<int>(bounds.toFloat().getHeight() * 0.9f);
     slider.centreWithSize(w, h);
@@ -409,6 +486,7 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(4, "slider");
     m.addItem(5, "sum");
     m.addItem(6, "monitor");
+    m.addItem(7, "curve");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -429,6 +507,9 @@ struct GraphEditor : public GraphViewComponent {
           break;
         case 6:
           addHostNode(new MonitorProcessor(graph, "monitor", 1, 1), 150, 60, position);
+          break;
+        case 7:
+          addHostNode(new CurveProcessor(graph, "curve", 1, 1), 200, 200, position);
           break;
         default:
           break;

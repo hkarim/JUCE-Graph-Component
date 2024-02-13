@@ -74,6 +74,9 @@ void HostNodeComponent::resized() {
       resizableComponent.setAlwaysOnTop(true);
       bounds = getLocalBounds();
       resizableComponent.setTopLeftPosition(bounds.getWidth() - 10, bounds.getHeight() - 20);
+//      if (auto parent = getParentComponent()) {
+//        parent->childBoundsChanged(this);
+//      }
     }
     ///
   }

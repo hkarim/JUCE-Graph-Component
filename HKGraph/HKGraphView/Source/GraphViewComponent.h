@@ -136,6 +136,8 @@ public:
 
   void mouseUp(const juce::MouseEvent &e) override;
 
+  void childBoundsChanged(juce::Component *child) override;
+
   virtual void popupMenu(const juce::MouseEvent &e) {
     juce::ignoreUnused(e);
   }
