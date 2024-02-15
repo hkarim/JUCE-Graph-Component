@@ -9,6 +9,7 @@ struct Processors {
   static const std::string channelRouterProcessor;
   static const std::string channelSplitterNodeProcessor;
   static const std::string keyboardProcessor;
+  static const std::string noteFilterProcessor;
   static const std::string transposeProcessor;
   static const std::string velocityCurveProcessor;
 };

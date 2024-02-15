@@ -6,5 +6,6 @@ const std::string Processors::passthroughProcessor = "PassthroughProcessor";
 const std::string Processors::channelRouterProcessor = "ChannelRouterProcessor";
 const std::string Processors::channelSplitterNodeProcessor = "ChannelSplitterProcessor";
 const std::string Processors::keyboardProcessor = "KeyboardProcessor";
+const std::string Processors::noteFilterProcessor = "NoteFilterProcessor";
 const std::string Processors::transposeProcessor = "TransposeProcessor";
 const std::string Processors::velocityCurveProcessor = "VelocityCurveProcessor";

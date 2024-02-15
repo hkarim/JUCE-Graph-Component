@@ -5,6 +5,7 @@
 #include "ChannelRouterProcessor.h"
 #include "ChannelSplitterProcessor.h"
 #include "KeyboardProcessor.h"
+#include "NoteFilterProcessor.h"
 #include "MidiInNodeProcessor.h"
 #include "MidiOutNodeProcessor.h"
 #include "TransposeProcessor.h"
@@ -26,6 +27,8 @@ struct ProcessorRegistry {
       nodeProcessor = new ChannelSplitterProcessor(graph);
     else if (typeId ==  Processors::keyboardProcessor)
       nodeProcessor = new KeyboardProcessor(graph);
+    else if (typeId ==  Processors::noteFilterProcessor)
+      nodeProcessor = new NoteFilterProcessor(graph);
     else if (typeId == Processors::transposeProcessor)
       nodeProcessor = new TransposeProcessor(graph);
     else if (typeId == Processors::velocityCurveProcessor)

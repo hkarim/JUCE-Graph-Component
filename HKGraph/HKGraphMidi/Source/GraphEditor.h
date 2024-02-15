@@ -12,6 +12,7 @@
 #include "TransposeProcessor.h"
 #include "KeyboardProcessor.h"
 #include "CurveProcessor.h"
+#include "NoteFilterProcessor.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;
@@ -65,7 +66,6 @@ private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SliderPanel)
 };
 
-
 struct KeyboardPanel : public ConstrainedComponent {
   KeyboardProcessor *processor;
   GraphViewTheme theme;
@@ -110,7 +110,8 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(2, "channel-splitter");
     m.addItem(3, "channel-router");
     m.addItem(4, "keyboard");
-    m.addItem(5, "velocity-curve");
+    m.addItem(5, "note-filter");
+    m.addItem(6, "velocity-curve");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -127,6 +128,9 @@ struct GraphEditor : public GraphViewComponent {
           addHostNode(new KeyboardProcessor(graph, "keyboard", 1, 1), 400, 100, position);
           break;
         case 5:
+          addHostNode(new NoteFilterProcessor(graph, "note-filter", 1, 1), 400, 100, position);
+          break;
+        case 6:
           addHostNode(new VelocityCurveProcessor(graph, "velocity-curve", 1, 1), 300, 300, position);
           break;
         default:

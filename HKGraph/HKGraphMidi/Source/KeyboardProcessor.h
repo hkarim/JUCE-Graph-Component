@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Processors.h"
 #include "NodeProcessor.h"
 #include "PlaybackProcessor.h"
@@ -6,14 +7,19 @@
 struct KeyboardProcessor : public PlaybackProcessor {
   juce::MidiKeyboardState keyboardState{};
   juce::MidiMessageCollector keyboardMessageCollector;
+  bool hasCalledReset{false};
 
   explicit KeyboardProcessor(Graph *graph) :
     PlaybackProcessor(graph) {
+    keyboardMessageCollector.reset(512);
+    hasCalledReset = true;
     keyboardState.addListener(&keyboardMessageCollector);
   }
 
   KeyboardProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
     : PlaybackProcessor(graph, name, n_ins, n_outs) {
+    keyboardMessageCollector.reset(512);
+    hasCalledReset = true;
     keyboardState.addListener(&keyboardMessageCollector);
   }
 
@@ -24,6 +30,7 @@ struct KeyboardProcessor : public PlaybackProcessor {
   void prepareToPlay(double playbackSampleRate, int playbackSamplesPerBlock) override {
     PlaybackProcessor::prepareToPlay(playbackSampleRate, playbackSamplesPerBlock);
     keyboardMessageCollector.reset(playbackSampleRate);
+    hasCalledReset = true;
   }
 
   void
@@ -35,12 +42,12 @@ struct KeyboardProcessor : public PlaybackProcessor {
       output.addEvents(input.midiBuffer, 0, -1, 0);
       keyboardState.processNextMidiBuffer(output, 0, output.getNumEvents(), true);
     }
-    keyboardMessageCollector.removeNextBlockOfMessages(output, input.audioBuffer.getNumSamples());
+    if (hasCalledReset) {
+      keyboardMessageCollector.removeNextBlockOfMessages(output, input.audioBuffer.getNumSamples());
+    }
     Data result = std::make_any<Block>(input.audioBuffer, output);
-    if (!output.isEmpty()) {
-      for (auto &[_, p]: m_outs) {
-        p.async_dispatch(graph, result);
-      }
+    for (auto &[_, p]: m_outs) {
+      p.async_dispatch(graph, result);
     }
   }
 
