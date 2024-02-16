@@ -128,7 +128,11 @@ struct GraphEditor : public GraphViewComponent {
           addHostNode(new KeyboardProcessor(graph, "keyboard", 1, 1), 400, 100, position);
           break;
         case 5:
-          addHostNode(new NoteFilterProcessor(graph, "note-filter", 1, 1), 400, 100, position);
+          addHostNode(
+            new NoteFilterProcessor(graph, "note-filter", 1, 1),
+            NoteFilterProcessor::MIN_WIDTH,
+            NoteFilterProcessor::MIN_HEIGHT,
+            position);
           break;
         case 6:
           addHostNode(new VelocityCurveProcessor(graph, "velocity-curve", 1, 1), 300, 300, position);

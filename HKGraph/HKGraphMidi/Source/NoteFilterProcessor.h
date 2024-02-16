@@ -8,6 +8,8 @@ struct GraphKeyboardModel {
   int lastNotePressed{-1};
   bool showAllNoteNames{};
   std::vector<int> disabledNoteNumbers;
+  int enabledRangeBegin{};
+  int enabledRangeEnd{};
 };
 
 struct GraphKeyboardComponent : public juce::MidiKeyboardComponent {
@@ -125,6 +127,9 @@ private:
 };
 
 struct NoteFilterProcessor : public KeyboardProcessor {
+  static constexpr int MIN_WIDTH = 400;
+  static constexpr int MIN_HEIGHT = 200;
+
   GraphKeyboardModel model;
 
   explicit NoteFilterProcessor(Graph *graph) :
@@ -172,6 +177,8 @@ struct NoteFilterProcessor : public KeyboardProcessor {
     juce::ValueTree modelTree{"model-tree"};
     modelTree.setProperty("showAllNoteNames", juce::var(model.showAllNoteNames), nullptr);
     modelTree.setProperty("lastNotePressed", juce::var(model.lastNotePressed), nullptr);
+    modelTree.setProperty("enabledRangeBegin", juce::var(model.enabledRangeBegin), nullptr);
+    modelTree.setProperty("enabledRangeEnd", juce::var(model.enabledRangeEnd), nullptr);
     juce::Array<juce::var> disabledNoteNumbers;
     disabledNoteNumbers.resize(static_cast<int>(model.disabledNoteNumbers.size()));
     for (auto n: model.disabledNoteNumbers) {
@@ -186,6 +193,8 @@ struct NoteFilterProcessor : public KeyboardProcessor {
     auto modelTree = nodeTree.getChildWithName("model-tree");
     model.showAllNoteNames = modelTree.getProperty("showAllNoteNames");
     model.lastNotePressed = modelTree.getProperty("lastNotePressed");
+    model.enabledRangeBegin = modelTree.getProperty("enabledRangeBegin");
+    model.enabledRangeEnd = modelTree.getProperty("enabledRangeEnd");
     juce::Array<juce::var> *disabledNoteNumbers = modelTree.getProperty("disabledNoteNumbers").getArray();
     model.disabledNoteNumbers.clear();
     for (auto const &v: *disabledNoteNumbers) {
@@ -204,10 +213,12 @@ struct NoteFilterProcessor : public KeyboardProcessor {
     return c;
   }
 
-  struct KeyboardPanel : public ConstrainedComponent {
+  struct KeyboardPanel : public ConstrainedComponent, juce::Slider::Listener {
     NoteFilterProcessor *processor;
     GraphViewTheme theme;
     GraphKeyboardComponent keyboardComponent;
+    juce::Slider sliderBeginNoteRange;
+    juce::Slider sliderEndNoteRange;
 
     KeyboardPanel(NoteFilterProcessor *p, const GraphViewTheme &viewTheme)
       : ConstrainedComponent(),
@@ -216,21 +227,92 @@ struct NoteFilterProcessor : public KeyboardProcessor {
         keyboardComponent(
           p->keyboardState,
           juce::MidiKeyboardComponent::Orientation::horizontalKeyboard,
-          p->model) {
-      m_constrains.setMinimumSize(400, 100);
-      m_constrains.setMaximumHeight(100);
+          p->model),
+        sliderBeginNoteRange(juce::Slider::Rotary, juce::Slider::TextBoxBelow),
+        sliderEndNoteRange(juce::Slider::Rotary, juce::Slider::TextBoxBelow) {
+      m_constrains.setMinimumSize(NoteFilterProcessor::MIN_WIDTH, NoteFilterProcessor::MIN_HEIGHT);
+      m_constrains.setMaximumWidth(750);
+      m_constrains.setMaximumHeight(NoteFilterProcessor::MIN_HEIGHT);
       addAndMakeVisible(keyboardComponent);
+
+      auto valueToNoteName = [](double v) -> juce::String {
+        auto n = static_cast<int>(v);
+        return juce::MidiMessage::getMidiNoteName(n, true, true, 3);
+      };
+
+      sliderBeginNoteRange.setRange(0, 127, 1);
+      sliderBeginNoteRange.setTextBoxIsEditable(false);
+      sliderBeginNoteRange.textFromValueFunction = valueToNoteName;
+      sliderBeginNoteRange.setValue(processor->model.enabledRangeBegin);
+      sliderBeginNoteRange.addListener(this);
+      addAndMakeVisible(sliderBeginNoteRange);
+
+      sliderEndNoteRange.setRange(0, 127, 1);
+      sliderEndNoteRange.setTextBoxIsEditable(false);
+      sliderEndNoteRange.textFromValueFunction = valueToNoteName;
+      sliderEndNoteRange.setValue(processor->model.enabledRangeEnd);
+      sliderEndNoteRange.addListener(this);
+      addAndMakeVisible(sliderEndNoteRange);
     }
 
-    ~KeyboardPanel() override = default;
+    ~KeyboardPanel() override {
+      sliderBeginNoteRange.removeListener(this);
+      sliderEndNoteRange.removeListener(this);
+    }
 
     void paint(juce::Graphics &g) override {
       g.fillAll(juce::Colour(theme.cNodeBackground));
     }
 
     void resized() override {
+      juce::FlexBox flexBox;
+      flexBox.flexDirection = juce::FlexBox::Direction::row;
+      flexBox.justifyContent = juce::FlexBox::JustifyContent::center;
+      flexBox.alignContent = juce::FlexBox::AlignContent::stretch;
+      flexBox.flexWrap = juce::FlexBox::Wrap::wrap;
+      flexBox.alignItems = juce::FlexBox::AlignItems::stretch;
+
+      // keyboard
+      flexBox.items.add(
+        juce::FlexItem(keyboardComponent)
+          .withMinWidth(NoteFilterProcessor::MIN_WIDTH)
+          .withMinHeight(60.0f)
+          .withMaxHeight(60.0f)
+          .withFlex(1.0f));
+
+      // controls
+      juce::FlexBox controls;
+      controls.flexDirection = juce::FlexBox::Direction::column;
+      controls.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+      controls.alignContent = juce::FlexBox::AlignContent::flexStart;
+      controls.flexWrap = juce::FlexBox::Wrap::wrap;
+      controls.alignItems = juce::FlexBox::AlignItems::flexStart;
+      controls.items.add(
+        juce::FlexItem(sliderBeginNoteRange).withMinHeight(50.0f).withMinWidth(50.0f).withFlex(0.3f));
+      controls.items.add(
+        juce::FlexItem(sliderEndNoteRange).withMinHeight(50.0f).withMinWidth(50.0f).withFlex(0.3f));
+      flexBox.items.add(
+        juce::FlexItem(controls)
+          .withMinWidth(NoteFilterProcessor::MIN_WIDTH)
+          .withMinHeight(60.0f)
+          //.withMaxHeight(60.0f)
+          .withFlex(1.0f));
+
       auto bounds = getLocalBounds();
-      keyboardComponent.setBounds(bounds);
+      flexBox.performLayout(bounds);
+    }
+
+    void sliderValueChanged (juce::Slider*) override {
+      processor->model.disabledNoteNumbers.clear();
+      processor->model.enabledRangeBegin = static_cast<int>(sliderBeginNoteRange.getValue());
+      for (auto i{0}; i < processor->model.enabledRangeBegin; ++i) {
+        processor->model.disabledNoteNumbers.push_back(i);
+      }
+      processor->model.enabledRangeEnd = static_cast<int>(sliderEndNoteRange.getValue());
+      for (auto i{processor->model.enabledRangeEnd + 1}; i <= 127 ; ++i) {
+        processor->model.disabledNoteNumbers.push_back(i);
+      }
+      keyboardComponent.repaint();
     }
 
   private:
