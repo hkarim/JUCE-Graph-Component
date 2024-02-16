@@ -7,7 +7,8 @@ struct Processors {
   static const std::string midiOutNodeProcessor;
   static const std::string passthroughProcessor;
   static const std::string channelRouterProcessor;
-  static const std::string channelSplitterNodeProcessor;
+  static const std::string channelSplitterProcessor;
+  static const std::string chordSplitterProcessor;
   static const std::string keyboardProcessor;
   static const std::string noteFilterProcessor;
   static const std::string transposeProcessor;

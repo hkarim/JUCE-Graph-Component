@@ -13,6 +13,7 @@
 #include "KeyboardProcessor.h"
 #include "CurveProcessor.h"
 #include "NoteFilterProcessor.h"
+#include "ChordSplitterProcessor.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;
@@ -109,9 +110,10 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(1, "transpose");
     m.addItem(2, "channel-splitter");
     m.addItem(3, "channel-router");
-    m.addItem(4, "keyboard");
-    m.addItem(5, "note-filter");
-    m.addItem(6, "velocity-curve");
+    m.addItem(4, "chord-splitter");
+    m.addItem(5, "keyboard");
+    m.addItem(6, "note-filter");
+    m.addItem(7, "velocity-curve");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -125,16 +127,19 @@ struct GraphEditor : public GraphViewComponent {
           addHostNode(new ChannelRouterProcessor(graph, "channel-router", 1, 1), 150, 150, position);
           break;
         case 4:
-          addHostNode(new KeyboardProcessor(graph, "keyboard", 1, 1), 400, 100, position);
+          addNode(new ChordSplitterProcessor(graph, "chord-splitter", 1, 16), position);
           break;
         case 5:
+          addHostNode(new KeyboardProcessor(graph, "keyboard", 1, 1), 400, 100, position);
+          break;
+        case 6:
           addHostNode(
             new NoteFilterProcessor(graph, "note-filter", 1, 1),
             NoteFilterProcessor::MIN_WIDTH,
             NoteFilterProcessor::MIN_HEIGHT,
             position);
           break;
-        case 6:
+        case 7:
           addHostNode(new VelocityCurveProcessor(graph, "velocity-curve", 1, 1), 300, 300, position);
           break;
         default:

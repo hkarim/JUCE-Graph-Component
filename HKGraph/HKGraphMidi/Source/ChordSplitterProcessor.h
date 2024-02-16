@@ -2,31 +2,48 @@
 
 #include "Graph.h"
 #include "Processors.h"
+#include "NodeProcessor.h"
 
-struct ChannelSplitterProcessor : public NodeProcessor {
+struct ChordSplitterProcessor : public NodeProcessor {
   std::unordered_map<int, uuid> m_ordered_pins;
 
-  explicit ChannelSplitterProcessor(Graph *graph) :
+  explicit ChordSplitterProcessor(Graph *graph) :
     NodeProcessor(graph) {
   }
 
-  ChannelSplitterProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
+  ChordSplitterProcessor(Graph *graph, const std::string &name, uint32_t n_ins, uint32_t n_outs)
     : NodeProcessor(graph, name, n_ins, n_outs) {
     for (auto &[id, p]: m_outs) {
       m_ordered_pins[static_cast<int>(p.m_order)] = id;
     }
   }
 
-  ~ChannelSplitterProcessor() override = default;
+  ~ChordSplitterProcessor() override = default;
 
   void
   on_data(Graph *graph, const std::optional<const Node::Pin> &pin, Data &data) override {
     juce::ignoreUnused(pin);
     auto input = std::any_cast<Block>(data);
     std::unordered_map<int, juce::MidiBuffer> output;
+    std::vector<juce::MidiMessageMetadata> sorted;
     for (auto m: input.midiBuffer) {
-      output[m.getMessage().getChannel() - 1].addEvent(m.getMessage(), m.samplePosition);
+      sorted.push_back(m);
     }
+
+    std::sort(sorted.begin(), sorted.end(), [&](auto &l, auto &r) {
+      return l.getMessage().getNoteNumber() < r.getMessage().getNoteNumber();
+    });
+
+    auto i = 0;
+    for (auto &m : sorted) {
+      auto message = m.getMessage();
+      message.setChannel(i + 1);
+      output[i].addEvent(message, m.samplePosition);
+      ++i;
+
+      if (i > 15) i = 0;
+    }
+
     for (auto &[index, channelOutput]: output) {
       auto uuid_ptr = m_ordered_pins.find(index);
       if (uuid_ptr != std::end(m_ordered_pins)) {
@@ -40,7 +57,7 @@ struct ChannelSplitterProcessor : public NodeProcessor {
   }
 
   [[nodiscard]] std::string typeId() const override {
-    return Processors::channelSplitterProcessor;
+    return Processors::chordSplitterProcessor;
   }
 
   void saveState(juce::ValueTree& nodeTree) override {
@@ -55,7 +72,7 @@ struct ChannelSplitterProcessor : public NodeProcessor {
   }
 
   NodeProcessor *clone() override {
-    auto c = new ChannelSplitterProcessor(
+    auto c = new ChordSplitterProcessor(
       m_graph,
       m_name,
       static_cast<uint32_t>(m_ins.size()),

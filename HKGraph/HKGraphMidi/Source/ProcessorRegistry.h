@@ -10,6 +10,7 @@
 #include "MidiOutNodeProcessor.h"
 #include "TransposeProcessor.h"
 #include "CurveProcessor.h"
+#include "ChordSplitterProcessor.h"
 
 struct ProcessorRegistry {
 
@@ -23,8 +24,10 @@ struct ProcessorRegistry {
       nodeProcessor = new PassthroughProcessor(graph);
     else if (typeId ==  Processors::channelRouterProcessor)
       nodeProcessor = new ChannelRouterProcessor(graph);
-    else if (typeId ==  Processors::channelSplitterNodeProcessor)
+    else if (typeId ==  Processors::channelSplitterProcessor)
       nodeProcessor = new ChannelSplitterProcessor(graph);
+    else if (typeId ==  Processors::chordSplitterProcessor)
+      nodeProcessor = new ChordSplitterProcessor(graph);
     else if (typeId ==  Processors::keyboardProcessor)
       nodeProcessor = new KeyboardProcessor(graph);
     else if (typeId ==  Processors::noteFilterProcessor)
