@@ -286,6 +286,13 @@ void GraphViewComponent::nodeMouseUp(NodeComponent *node, const juce::MouseEvent
   recordState();
 }
 
+void GraphViewComponent::nodeMouseDoubleClick(NodeComponent *node, const juce::MouseEvent &) {
+  if (auto *n = dynamic_cast<HostNodeComponent*>(node)) {
+    n->toggleSize();
+    childBoundsChanged(node);
+  }
+}
+
 void GraphViewComponent::edgeMouseDown(EdgeComponent *edge, const juce::MouseEvent &mouseEvent) {
 
   if (!mouseEvent.mods.isShiftDown() && edgeMultiSelectionOn && !edge->selected) {
@@ -447,16 +454,10 @@ void GraphViewComponent::mouseUp(const juce::MouseEvent &mouseEvent) {
   removeChildComponent(selector.get());
 }
 
-void GraphViewComponent::childBoundsChanged(juce::Component *child) {
-  if (auto host = dynamic_cast<HostNodeComponent*>(child)) {
-    if (host->editor) {
-      if (dynamic_cast<ConstrainedComponent*>(host->editor.get())) {
-        for (auto &[_, e]: edges) {
-          calculateEdgeBounds(e);
-          e->repaint();
-        }
-      }
-    }
+void GraphViewComponent::childBoundsChanged(juce::Component *) {
+  for (auto &[_, e]: edges) {
+    calculateEdgeBounds(e);
+    e->repaint();
   }
 }
 

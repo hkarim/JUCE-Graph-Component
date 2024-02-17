@@ -10,6 +10,7 @@ public:
   juce::ComponentBoundsConstrainer constrains;
   juce::ResizableCornerComponent resizableComponent;
 
+
   HostNodeComponent(const GraphViewTheme& theme, NodeProcessor *processor);
 
   ~HostNodeComponent() override;
@@ -22,8 +23,16 @@ public:
 
   void resized() override;
 
-private:
+  void toggleSize();
 
+  void minimize();
+
+  void maximize();
+
+private:
+  int expandedWidth{};
+  int expandedHeight{};
+  bool expanded{true};
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HostNodeComponent)
 
 };

@@ -62,7 +62,9 @@ public:
     }
 
     void mouseDoubleClick (const juce::MouseEvent &e) override {
-      if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
+      if (auto node = dynamic_cast<NodeComponent *>(e.originalComponent)) {
+        view->nodeMouseDoubleClick(node, e);
+      } else if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
         view->edgeMouseDoubleClick(edge, e);
       }
     }
@@ -119,6 +121,8 @@ public:
   void nodeMouseUp(NodeComponent *node, const juce::MouseEvent &e);
 
   void nodeMouseDrag(NodeComponent *node, const juce::MouseEvent &e);
+
+  void nodeMouseDoubleClick(NodeComponent *node, const juce::MouseEvent &e);
 
   void calculateEdgeBounds(EdgeComponent *edge);
 

@@ -20,6 +20,7 @@ struct NodeDescriptor {
   int height{};
   juce::AffineTransform translation;
   juce::AffineTransform scale;
+  juce::ValueTree nodeData{"nd-node-data"};
 
   void save(juce::ValueTree& tree) const {
 
@@ -45,6 +46,7 @@ struct NodeDescriptor {
     tree.setProperty("nd-translation-y", juce::var(translation.getTranslationY()), nullptr);
 
     tree.setProperty("nd-scale", juce::var(std::sqrt(std::abs(scale.getDeterminant()))), nullptr);
+    tree.appendChild(nodeData, nullptr);
   }
 
   static NodeDescriptor *restore(const juce::ValueTree& tree) {
@@ -79,6 +81,7 @@ struct NodeDescriptor {
     float scale = tree.getProperty("nd-scale");
     nd->scale = juce::AffineTransform::scale(scale);
 
+    nd->nodeData = tree.getChildWithName("nd-node-data");
     return nd;
   }
 };
