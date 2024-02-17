@@ -31,7 +31,6 @@ NodeComponent::NodeComponent(
 
 NodeComponent::~NodeComponent() = default;
 
-
 void NodeComponent::apply(const NodeDescriptor *descriptor) {
   this->selected = descriptor->selected;
   this->cNodeBackgroundCurrent = descriptor->cNodeBackgroundCurrent;
@@ -45,7 +44,7 @@ void NodeComponent::apply(const NodeDescriptor *descriptor) {
     descriptor->height);
 }
 
-NodeDescriptor *NodeComponent::makeDescriptor() {
+NodeDescriptor *NodeComponent::makeDescriptor() const {
   auto descriptor = new NodeDescriptor;
   descriptor->kind = NodeDescriptorKind::Plain;
   descriptor->processor = this->m_processor;
@@ -193,6 +192,11 @@ void NodeComponent::mouseExit(const juce::MouseEvent &mouseEvent) {
 
 void NodeComponent::mouseDoubleClick(const juce::MouseEvent &mouseEvent) {
   juce::ignoreUnused(mouseEvent);
+}
+
+NodeComponent *NodeComponent::clone(const GraphViewTheme &graphViewTheme, NodeProcessor *processor) const {
+  auto node = new NodeComponent(graphViewTheme, processor);
+  return node;
 }
 
 void NodeComponent::debug(const std::string &action) const {

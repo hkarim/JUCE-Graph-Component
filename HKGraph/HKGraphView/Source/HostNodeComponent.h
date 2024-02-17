@@ -15,7 +15,7 @@ public:
 
   ~HostNodeComponent() override;
 
-  NodeDescriptor* makeDescriptor() override;
+  NodeDescriptor* makeDescriptor() const override;
 
   static HostNodeComponent* fromDescriptor(const NodeDescriptor *descriptor);
 
@@ -28,6 +28,8 @@ public:
   void minimize();
 
   void maximize();
+
+  NodeComponent *clone(const GraphViewTheme &graphViewTheme, NodeProcessor *processor) const override;
 
 private:
   int expandedWidth{};

@@ -17,14 +17,18 @@ HostNodeComponent::HostNodeComponent(const GraphViewTheme &viewTheme, NodeProces
     }
   }
 
-  expandedWidth = getWidth();
-  expandedHeight = getHeight();
+  if (editor) {
+    auto guest = editor.get();
+    addAndMakeVisible(guest);
+    if (dynamic_cast<ConstrainedComponent *>(guest)) {
+      addAndMakeVisible(resizableComponent);
+    }
+  }
 }
 
 HostNodeComponent::~HostNodeComponent() = default;
 
-
-NodeDescriptor *HostNodeComponent::makeDescriptor() {
+NodeDescriptor *HostNodeComponent::makeDescriptor() const {
   auto descriptor = NodeComponent::makeDescriptor();
   descriptor->kind = NodeDescriptorKind::Host;
   descriptor->nodeData.setProperty("expanded", juce::var(expanded), nullptr);
@@ -39,7 +43,12 @@ HostNodeComponent *HostNodeComponent::fromDescriptor(const NodeDescriptor *descr
   node->expanded = descriptor->nodeData.getProperty("expanded");
   node->expandedWidth = descriptor->nodeData.getProperty("expandedWidth");
   node->expandedHeight = descriptor->nodeData.getProperty("expandedHeight");
-  node->toggleSize();
+  node->setSize(node->expandedWidth, node->expandedHeight);
+  if (node->expanded) {
+    node->maximize();
+  } else {
+    node->minimize();
+  }
   return node;
 }
 
@@ -68,8 +77,7 @@ void HostNodeComponent::paint(juce::Graphics &g) {
       m_processor->m_name,
       juce::Rectangle<int>(0, 4, bounds.getWidth(), theme.hostComponentDragAreaHeight),
       juce::Justification::centred);
-  }
-  else {
+  } else {
     auto ins = m_processor->m_ins.size();
     auto outs = m_processor->m_outs.size();
     auto maxNumPins = static_cast<int>(std::max(ins, outs));
@@ -84,15 +92,11 @@ void HostNodeComponent::paint(juce::Graphics &g) {
 void HostNodeComponent::resized() {
   if (expanded) {
     if (editor) {
-      expandedWidth = getWidth();
-      expandedHeight = getHeight();
       auto bounds = boxBounds();
-      auto guest = editor.get();
       bounds.removeFromTop(theme.hostComponentDragAreaHeight);
+      auto guest = editor.get();
       guest->setBounds(0, theme.hostComponentDragAreaHeight, bounds.getWidth(), bounds.getHeight() + theme.pinHeight);
-      addAndMakeVisible(guest);
       if (dynamic_cast<ConstrainedComponent *>(guest)) {
-        addAndMakeVisible(resizableComponent);
         resizableComponent.setSize(10, 10);
         resizableComponent.setAlwaysOnTop(true);
         bounds = getLocalBounds();
@@ -118,11 +122,9 @@ void HostNodeComponent::minimize() {
     removeChildComponent(editor.get());
     removeChildComponent(&resizableComponent);
   }
-  repaint();
 }
 
 void HostNodeComponent::maximize() {
-  setSize(expandedWidth, expandedHeight);
   expanded = true;
   if (editor) {
     auto guest = editor.get();
@@ -131,5 +133,22 @@ void HostNodeComponent::maximize() {
       addAndMakeVisible(resizableComponent);
     }
   }
-  repaint();
+  // must set size after adding the components, or the components won't show up
+  setSize(expandedWidth, expandedHeight);
+}
+
+NodeComponent *HostNodeComponent::clone(const GraphViewTheme &graphViewTheme, NodeProcessor *processor) const {
+  auto node = new HostNodeComponent(graphViewTheme, processor);
+  node->expanded = this->expanded;
+  node->expandedWidth = this->expandedWidth;
+  node->expandedHeight = this->expandedHeight;
+  if (node->expanded) {
+    node->maximize();
+  } else {
+    if (editor) {
+      node->removeChildComponent(node->editor.get());
+      node->removeChildComponent(&node->resizableComponent);
+    }
+  }
+  return node;
 }

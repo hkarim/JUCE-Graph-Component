@@ -24,7 +24,7 @@ class PinComponent : public juce::Component, public juce::SettableTooltipClient 
 
   NodeComponent(const GraphViewTheme &graphViewTheme, NodeProcessor *processor);
 
-  virtual NodeDescriptor *makeDescriptor();
+  virtual NodeDescriptor *makeDescriptor() const;
 
   static NodeComponent *fromDescriptor(const NodeDescriptor *descriptor);
 
@@ -57,6 +57,8 @@ class PinComponent : public juce::Component, public juce::SettableTooltipClient 
   void mouseDoubleClick(const juce::MouseEvent &e) override;
 
   void mouseExit(const juce::MouseEvent &e) override;
+
+  virtual NodeComponent *clone(const GraphViewTheme &graphViewTheme, NodeProcessor *processor) const;
 
   void debug(const std::string &action) const;
 

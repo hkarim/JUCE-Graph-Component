@@ -132,14 +132,8 @@ void GraphViewComponent::addHostNode(NodeProcessor *processor,
 NodeComponent *GraphViewComponent::clone(const NodeComponent *original) {
   auto w = original->getWidth();
   auto h = original->getHeight();
-  NodeComponent *node;
   auto processor = original->m_processor->clone();
-  if (dynamic_cast<const HostNodeComponent *>(original)) {
-    node = new HostNodeComponent(theme, processor);
-  } else {
-    node = new NodeComponent(theme, processor);
-  }
-
+  NodeComponent *node = original->clone(original->theme, processor);
   auto position = juce::Point<float>(original->translation.getTranslationX(), original->translation.getTranslationY());
   position.addXY(20.0f, 20.0f);
   node->setBounds(0, 0, w, h);
