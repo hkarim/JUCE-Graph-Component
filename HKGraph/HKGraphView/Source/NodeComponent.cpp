@@ -92,6 +92,13 @@ juce::Rectangle<int> NodeComponent::boxBounds() {
 
 void NodeComponent::paint(juce::Graphics &g) {
   juce::Path p;
+  // calculate the width based on the name text
+  auto font = g.getCurrentFont();
+  auto preferredWidth = static_cast<int>(std::ceil(font.getStringWidthFloat(m_processor->m_name)));
+  if (preferredWidth > getWidth()) {
+    setSize(preferredWidth + 10, getHeight());
+  }
+
   auto bounds = boxBounds();
   p.addRoundedRectangle(bounds, 3);
 
@@ -107,10 +114,9 @@ void NodeComponent::paint(juce::Graphics &g) {
       g.setColour(juce::Colour(cNodeBackgroundCurrent));
   }
 
-
   g.fillPath(p);
   g.setColour(juce::Colours::white);
-  g.drawText(m_processor->m_name, boxBounds(), juce::Justification::centred, true);
+  g.drawText(m_processor->m_name, bounds, juce::Justification::centred, true);
 }
 
 void NodeComponent::resized() {
