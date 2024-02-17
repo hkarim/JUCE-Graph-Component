@@ -9,7 +9,7 @@ enum class NodeDescriptorKind {
 };
 
 struct NodeDescriptor {
-  NodeDescriptorKind kind;
+  NodeDescriptorKind kind{NodeDescriptorKind::Plain};
   GraphViewTheme theme;
   NodeProcessor *processor{};
   bool selected{};
