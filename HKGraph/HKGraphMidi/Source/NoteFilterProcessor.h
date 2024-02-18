@@ -8,8 +8,8 @@ struct GraphKeyboardModel {
   int lastNotePressed{-1};
   bool showAllNoteNames{};
   std::vector<int> disabledNoteNumbers;
-  int enabledRangeBegin{};
-  int enabledRangeEnd{};
+  int enabledRangeBegin{1};
+  int enabledRangeEnd{127};
 };
 
 struct GraphKeyboardComponent : public juce::MidiKeyboardComponent {
