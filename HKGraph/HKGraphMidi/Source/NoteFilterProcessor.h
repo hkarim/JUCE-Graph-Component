@@ -128,7 +128,7 @@ private:
 
 struct NoteFilterProcessor : public KeyboardProcessor {
   static constexpr int MIN_WIDTH = 400;
-  static constexpr int MIN_HEIGHT = 200;
+  static constexpr int MIN_HEIGHT = 150;
 
   GraphKeyboardModel model;
 
@@ -210,6 +210,7 @@ struct NoteFilterProcessor : public KeyboardProcessor {
       static_cast<std::uint32_t>(m_ins.size()),
       static_cast<std::uint32_t>(m_outs.size()));
     c->m_muted = m_muted;
+    c->model = model;
     return c;
   }
 
@@ -228,8 +229,8 @@ struct NoteFilterProcessor : public KeyboardProcessor {
           p->keyboardState,
           juce::MidiKeyboardComponent::Orientation::horizontalKeyboard,
           p->model),
-        sliderBeginNoteRange(juce::Slider::Rotary, juce::Slider::TextBoxBelow),
-        sliderEndNoteRange(juce::Slider::Rotary, juce::Slider::TextBoxBelow) {
+        sliderBeginNoteRange(juce::Slider::LinearBar, juce::Slider::TextBoxLeft),
+        sliderEndNoteRange(juce::Slider::LinearBar, juce::Slider::TextBoxRight) {
       m_constrains.setMinimumSize(NoteFilterProcessor::MIN_WIDTH, NoteFilterProcessor::MIN_HEIGHT);
       m_constrains.setMaximumWidth(750);
       m_constrains.setMaximumHeight(NoteFilterProcessor::MIN_HEIGHT);
@@ -282,34 +283,54 @@ struct NoteFilterProcessor : public KeyboardProcessor {
 
       // controls
       juce::FlexBox controls;
-      controls.flexDirection = juce::FlexBox::Direction::column;
+      controls.flexDirection = juce::FlexBox::Direction::row;
       controls.justifyContent = juce::FlexBox::JustifyContent::flexStart;
       controls.alignContent = juce::FlexBox::AlignContent::flexStart;
       controls.flexWrap = juce::FlexBox::Wrap::wrap;
       controls.alignItems = juce::FlexBox::AlignItems::flexStart;
+      juce::FlexItem::Margin sliderMargin(
+        2.0f, // left
+        2.0f, // right
+        5.0f, // top
+        5.0f  // bottom
+      );
       controls.items.add(
-        juce::FlexItem(sliderBeginNoteRange).withMinHeight(50.0f).withMinWidth(50.0f).withFlex(0.3f));
+        juce::FlexItem(sliderBeginNoteRange)
+          .withMinHeight(30.0f)
+          .withMinWidth(100.0f)
+          .withFlex(0.4f)
+          .withMargin(sliderMargin));
       controls.items.add(
-        juce::FlexItem(sliderEndNoteRange).withMinHeight(50.0f).withMinWidth(50.0f).withFlex(0.3f));
+        juce::FlexItem(sliderEndNoteRange)
+          .withMinHeight(30.0f)
+          .withMinWidth(100.0f)
+          .withFlex(0.4f)
+          .withMargin(sliderMargin));
+      juce::FlexItem::Margin controlsMargin(
+        5.0f, // left
+        5.0f, // right
+        5.0f, // top
+        5.0f  // bottom
+      );
       flexBox.items.add(
         juce::FlexItem(controls)
           .withMinWidth(NoteFilterProcessor::MIN_WIDTH)
-          .withMinHeight(60.0f)
-          //.withMaxHeight(60.0f)
-          .withFlex(1.0f));
+          .withMinHeight(30.0f)
+          .withFlex(1.0f)
+          .withMargin(controlsMargin));
 
       auto bounds = getLocalBounds();
       flexBox.performLayout(bounds);
     }
 
-    void sliderValueChanged (juce::Slider*) override {
+    void sliderValueChanged(juce::Slider *) override {
       processor->model.disabledNoteNumbers.clear();
       processor->model.enabledRangeBegin = static_cast<int>(sliderBeginNoteRange.getValue());
       for (auto i{0}; i < processor->model.enabledRangeBegin; ++i) {
         processor->model.disabledNoteNumbers.push_back(i);
       }
       processor->model.enabledRangeEnd = static_cast<int>(sliderEndNoteRange.getValue());
-      for (auto i{processor->model.enabledRangeEnd + 1}; i <= 127 ; ++i) {
+      for (auto i{processor->model.enabledRangeEnd + 1}; i <= 127; ++i) {
         processor->model.disabledNoteNumbers.push_back(i);
       }
       keyboardComponent.repaint();
