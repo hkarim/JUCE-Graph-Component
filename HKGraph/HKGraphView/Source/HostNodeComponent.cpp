@@ -54,6 +54,8 @@ HostNodeComponent *HostNodeComponent::fromDescriptor(const NodeDescriptor *descr
 
 void HostNodeComponent::paint(juce::Graphics &g) {
   if (expanded) {
+    expandedWidth = getWidth();
+    expandedHeight = getHeight();
     juce::Path p;
     auto bounds = boxBounds();
     p.addRoundedRectangle(bounds, 3);
