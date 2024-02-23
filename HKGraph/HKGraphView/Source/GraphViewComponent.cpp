@@ -42,6 +42,12 @@ void GraphViewComponent::resized() {
 }
 
 void GraphViewComponent::scrollBarMoved(juce::ScrollBar *scrollBarThatHasMoved, double newRangeStart) {
+  onScroll(scrollBarThatHasMoved, newRangeStart, false);
+}
+
+void GraphViewComponent::onScroll(juce::ScrollBar *scrollBar, double newRangeStart, bool reverse) {
+  auto reverseLeftAndUp = reverse? -1 : 1;
+  auto reverseRightAndDown = reverse? 1 : -1;
   auto range = static_cast<int>(newRangeStart);
   auto delta = std::abs(range);
   auto left = range < hsbLast;
@@ -51,13 +57,13 @@ void GraphViewComponent::scrollBarMoved(juce::ScrollBar *scrollBarThatHasMoved, 
   hsbLast = range;
   vsbLast = range;
   auto offset = juce::Point<double>();
-  if (scrollBarThatHasMoved == &hsb) {
-    if (left) offset.setX(delta);
-    if (right) offset.setX(-delta);
+  if (scrollBar == &hsb) {
+    if (left) offset.setX(reverseLeftAndUp * delta);
+    if (right) offset.setX(reverseRightAndDown * delta);
   }
-  if (scrollBarThatHasMoved == &vsb) {
-    if (up) offset.setY(delta);
-    if (down) offset.setY(-delta);
+  if (scrollBar == &vsb) {
+    if (up) offset.setY(reverseLeftAndUp * delta);
+    if (down) offset.setY(reverseRightAndDown * delta);
   }
   for (auto &[_, n]: nodes) {
     n->translation = n->translation.translated(offset);
@@ -494,6 +500,17 @@ void GraphViewComponent::mouseUp(const juce::MouseEvent &mouseEvent) {
   removeChildComponent(selector.get());
 }
 
+void GraphViewComponent::mouseWheelMove(const juce::MouseEvent &, const juce::MouseWheelDetails &wheel) {
+  if (wheel.deltaX != 0.0f) {
+    hsb.setCurrentRangeStart(hsb.getCurrentRangeStart() + wheel.deltaX * 10.0f, juce::NotificationType::dontSendNotification);
+    onScroll(&hsb, hsb.getCurrentRangeStart(), true);
+  }
+  if (wheel.deltaY != 0.0f) {
+    vsb.setCurrentRangeStart(vsb.getCurrentRangeStart() + wheel.deltaY * 10.0f, juce::NotificationType::dontSendNotification);
+    onScroll(&vsb, vsb.getCurrentRangeStart(), true);
+  }
+}
+
 void GraphViewComponent::childBoundsChanged(juce::Component *) {
   for (auto &[_, e]: edges) {
     calculateEdgeBounds(e);
@@ -728,6 +745,7 @@ void GraphViewComponent::mute() {
   repaint();
 }
 
+[[maybe_unused]]
 void GraphViewComponent::debug(const std::string &action) const {
   std::cout << "[GraphViewComponent::" << action << "]"
             << " node-size = " << nodes.size()

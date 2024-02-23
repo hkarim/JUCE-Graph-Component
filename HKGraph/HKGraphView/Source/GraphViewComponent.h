@@ -86,6 +86,8 @@ public:
 
   void scrollBarMoved(juce::ScrollBar *scrollBarThatHasMoved, double newRangeStart) override;
 
+  void onScroll(juce::ScrollBar *scrollBar, double newRangeStart, bool reverse);
+
   void recordUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>> &nodeDescriptors);
 
   void restoreUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>> &nodeDescriptors);
@@ -146,14 +148,7 @@ public:
 
   void mouseUp(const juce::MouseEvent &e) override;
 
-  void mouseWheelMove(const juce::MouseEvent &, const juce::MouseWheelDetails &wheel) override {
-    if (wheel.deltaX != 0.0f) {
-      hsb.setCurrentRangeStart(hsb.getCurrentRangeStart() + wheel.deltaX * 10.0f);
-    }
-    if (wheel.deltaY != 0.0f) {
-      vsb.setCurrentRangeStart(vsb.getCurrentRangeStart() + wheel.deltaY * 10.0f);
-    }
-  }
+  void mouseWheelMove(const juce::MouseEvent &, const juce::MouseWheelDetails &wheel) override;
 
   void childBoundsChanged(juce::Component *child) override;
 
