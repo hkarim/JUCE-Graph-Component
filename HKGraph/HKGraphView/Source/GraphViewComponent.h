@@ -6,7 +6,7 @@
 #include "SelectionComponent.h"
 #include "UnboundEdgeComponent.h"
 
-class GraphViewComponent : public juce::Component {
+class GraphViewComponent : public juce::Component, public juce::ScrollBar::Listener {
 
 public:
   Graph *graph;
@@ -18,6 +18,10 @@ public:
   bool nodeMultiSelectionOn = false;
   bool edgeMultiSelectionOn = false;
   GraphViewTheme theme;
+  juce::ScrollBar hsb{false};
+  int hsbLast{};
+  juce::ScrollBar vsb{true};
+  int vsbLast{};
 
   explicit GraphViewComponent(Graph *sharedGraph);
 
@@ -50,7 +54,7 @@ public:
         view->nodeMouseDrag(node, e);
       } else if (auto pin = dynamic_cast<NodeComponent::PinComponent *>(e.originalComponent)) {
         view->pinMouseDrag(pin, e);
-      }  else if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
+      } else if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
         view->edgeMouseDrag(edge, e);
       }
     }
@@ -61,7 +65,7 @@ public:
       }
     }
 
-    void mouseDoubleClick (const juce::MouseEvent &e) override {
+    void mouseDoubleClick(const juce::MouseEvent &e) override {
       if (auto node = dynamic_cast<NodeComponent *>(e.originalComponent)) {
         view->nodeMouseDoubleClick(node, e);
       } else if (auto edge = dynamic_cast<EdgeComponent *>(e.originalComponent)) {
@@ -69,10 +73,10 @@ public:
       }
     }
 
+
   };
 
   std::unique_ptr<ChildrenMouseListener> mouseListener;
-
 
   ~GraphViewComponent() override;
 
@@ -80,9 +84,11 @@ public:
 
   void resized() override;
 
+  void scrollBarMoved(juce::ScrollBar *scrollBarThatHasMoved, double newRangeStart) override;
+
   void recordUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>> &nodeDescriptors);
 
-  void restoreUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>>& nodeDescriptors);
+  void restoreUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>> &nodeDescriptors);
 
   void addNode(
     NodeProcessor *processor,
@@ -139,6 +145,15 @@ public:
   void mouseDrag(const juce::MouseEvent &mouseEvent) override;
 
   void mouseUp(const juce::MouseEvent &e) override;
+
+  void mouseWheelMove(const juce::MouseEvent &, const juce::MouseWheelDetails &wheel) override {
+    if (wheel.deltaX != 0.0f) {
+      hsb.setCurrentRangeStart(hsb.getCurrentRangeStart() + wheel.deltaX * 10.0f);
+    }
+    if (wheel.deltaY != 0.0f) {
+      vsb.setCurrentRangeStart(vsb.getCurrentRangeStart() + wheel.deltaY * 10.0f);
+    }
+  }
 
   void childBoundsChanged(juce::Component *child) override;
 

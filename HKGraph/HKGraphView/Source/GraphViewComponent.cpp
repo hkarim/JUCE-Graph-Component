@@ -7,9 +7,17 @@ GraphViewComponent::GraphViewComponent(Graph *sharedGraph) : graph(sharedGraph) 
   edgeDrawer = std::make_unique<UnboundEdgeComponent>();
   mouseListener = std::make_unique<ChildrenMouseListener>(this);
   setWantsKeyboardFocus(true);
+
+  addAndMakeVisible(hsb);
+  hsb.addListener(this);
+
+  addAndMakeVisible(vsb);
+  vsb.addListener(this);
 }
 
 GraphViewComponent::~GraphViewComponent() {
+  vsb.removeListener(this);
+  hsb.removeListener(this);
   for (auto &[_, e]: edges) delete e;
   edges.clear();
   for (auto &[_, n]: nodes) delete n;
@@ -21,6 +29,44 @@ void GraphViewComponent::paint(juce::Graphics &g) {
 }
 
 void GraphViewComponent::resized() {
+  auto w = getWidth();
+  auto h = getHeight();
+
+  hsb.setBounds(0, h - 10, w, 10);
+  hsb.setSingleStepSize(1.0f);
+  hsb.setRangeLimits(-10000, 10000);
+
+  vsb.setBounds(w - 10, 0, 10, h);
+  vsb.setSingleStepSize(1.0f);
+  vsb.setRangeLimits(-10000, 10000);
+}
+
+void GraphViewComponent::scrollBarMoved(juce::ScrollBar *scrollBarThatHasMoved, double newRangeStart) {
+  auto range = static_cast<int>(newRangeStart);
+  auto delta = std::abs(range);
+  auto left = range < hsbLast;
+  auto right = range > hsbLast;
+  auto up = range < vsbLast;
+  auto down = range > vsbLast;
+  hsbLast = range;
+  vsbLast = range;
+  auto offset = juce::Point<double>();
+  if (scrollBarThatHasMoved == &hsb) {
+    if (left) offset.setX(delta);
+    if (right) offset.setX(-delta);
+  }
+  if (scrollBarThatHasMoved == &vsb) {
+    if (up) offset.setY(delta);
+    if (down) offset.setY(-delta);
+  }
+  for (auto &[_, n]: nodes) {
+    n->translation = n->translation.translated(offset);
+    n->setTransform(n->scale.followedBy(n->translation));
+  }
+  for (auto &[_, e]: edges) {
+    calculateEdgeBounds(e);
+    e->repaint();
+  }
 }
 
 void GraphViewComponent::recordUI(std::unordered_map<uuid, std::unique_ptr<NodeDescriptor>> &nodeDescriptors) {
@@ -281,10 +327,10 @@ void GraphViewComponent::nodeMouseUp(NodeComponent *node, const juce::MouseEvent
 }
 
 void GraphViewComponent::nodeMouseDoubleClick(NodeComponent *node, const juce::MouseEvent &) {
-  if (auto *n = dynamic_cast<HostNodeComponent*>(node)) {
+  if (auto *n = dynamic_cast<HostNodeComponent *>(node)) {
     n->toggleSize();
-    childBoundsChanged(node);
   }
+  childBoundsChanged(node);
 }
 
 void GraphViewComponent::edgeMouseDown(EdgeComponent *edge, const juce::MouseEvent &mouseEvent) {
@@ -520,7 +566,6 @@ void GraphViewComponent::zoomOut() {
       n->scale = juce::AffineTransform::scale(n->scaleFactor);
       n->setTransform(n->scale.followedBy(n->translation));
     }
-
   }
 
   for (auto &[_, e]: edges) {
