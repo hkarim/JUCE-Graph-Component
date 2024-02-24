@@ -45,6 +45,7 @@ struct MidiControllerCurvePanel : public CurvePanel, private juce::Slider::Liste
       auto n = static_cast<int>(v);
       return juce::String("CC#") + juce::String(n);
     };
+    sliderController.setValue(p->controllerType);
     addAndMakeVisible(sliderController);
   }
 

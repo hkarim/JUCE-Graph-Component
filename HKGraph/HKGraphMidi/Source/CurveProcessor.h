@@ -131,6 +131,7 @@ struct ControllerCurveProcessor : CurveProcessor {
     juce::ValueTree state{"state"};
     saveState(state);
     c->model.fromValueTree(state);
+    c->controllerType = controllerType;
     return c;
   }
 
