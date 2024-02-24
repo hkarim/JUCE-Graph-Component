@@ -6,6 +6,7 @@
 #include "NodeProcessor.h"
 #include "CurveEditor.h"
 #include "ConstrainedComponent.h"
+#include "GraphLookAndFeel.h"
 
 struct PassthroughProcessor : public NodeProcessor {
 
@@ -386,16 +387,20 @@ struct SliderPanel : public juce::Component {
   GraphViewTheme theme;
   juce::Slider slider;
   SliderBinding sliderBinding;
+  GraphLookAndFeel laf;
 
   SliderPanel(TransposeProcessor *p, const GraphViewTheme &viewTheme)
     : processor(p),
       theme(viewTheme),
       slider(juce::Slider::Rotary, juce::Slider::TextBoxBelow),
       sliderBinding(slider, processor->m_parameter) {
+    slider.setLookAndFeel(&laf);
     addAndMakeVisible(slider);
   }
 
-  ~SliderPanel() override = default;
+  ~SliderPanel() override {
+    slider.setLookAndFeel(nullptr);
+  }
 
   void paint(juce::Graphics &g) override {
     g.fillAll(juce::Colour(theme.cNodeBackground));

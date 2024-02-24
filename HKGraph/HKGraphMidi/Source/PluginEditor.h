@@ -13,6 +13,8 @@ public:
 
   void resized() override;
 
+  void recordUI();
+
 private:
 
   AudioPluginAudioProcessor &processorRef;

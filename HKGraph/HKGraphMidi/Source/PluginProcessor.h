@@ -12,7 +12,7 @@ struct Preferences {
   int editorHeight = 400;
 };
 
-class AudioPluginAudioProcessor final : public juce::AudioProcessor, public Graph::Listener {
+class AudioPluginAudioProcessor final : public juce::AudioProcessor, private juce::Timer, private Graph::Listener {
 
 public:
   Graph *graph;
@@ -74,6 +74,8 @@ public:
   void getStateInformation(juce::MemoryBlock &destData) override;
 
   void setStateInformation(const void *data, int sizeInBytes) override;
+
+  void timerCallback() override;
 
 private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

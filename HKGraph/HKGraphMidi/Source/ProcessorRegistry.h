@@ -36,6 +36,8 @@ struct ProcessorRegistry {
       nodeProcessor = new TransposeProcessor(graph);
     else if (typeId == Processors::velocityCurveProcessor)
       nodeProcessor = new VelocityCurveProcessor(graph);
+    else if (typeId == Processors::controllerCurveProcessor)
+      nodeProcessor = new ControllerCurveProcessor(graph);
 
     return nodeProcessor;
   }

@@ -12,9 +12,11 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
   graph->add_node(midiOut);
   assignMidiInOutDescriptors();
   graph->add_listener(this);
+  startTimer(1 * 1000);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {
+  stopTimer();
   graph->remove_listener(this);
   delete graph;
 }
@@ -439,6 +441,12 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
   juce::MemoryInputStream in{data, static_cast<size_t>(sizeInBytes), false};
   parameters = juce::ValueTree::readFromStream(in);
   restoreState();
+}
+
+void AudioPluginAudioProcessor::timerCallback() {
+  if (auto *editor = dynamic_cast<AudioPluginAudioProcessorEditor *>(getActiveEditor())) {
+    editor->recordUI();
+  }
 }
 
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {

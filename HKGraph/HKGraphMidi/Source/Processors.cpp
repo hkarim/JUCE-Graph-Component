@@ -10,3 +10,4 @@ const std::string Processors::keyboardProcessor = "KeyboardProcessor";
 const std::string Processors::noteFilterProcessor = "NoteFilterProcessor";
 const std::string Processors::transposeProcessor = "TransposeProcessor";
 const std::string Processors::velocityCurveProcessor = "VelocityCurveProcessor";
+const std::string Processors::controllerCurveProcessor = "ControllerCurveProcessor";

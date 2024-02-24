@@ -14,6 +14,7 @@
 #include "CurveProcessor.h"
 #include "NoteFilterProcessor.h"
 #include "ChordSplitterProcessor.h"
+#include "GraphLookAndFeel.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;
@@ -41,16 +42,20 @@ struct SliderPanel : public juce::Component {
   GraphViewTheme m_theme;
   juce::Slider m_slider;
   SliderBinding m_binding;
+  GraphLookAndFeel m_laf;
 
   SliderPanel(NodeProcessor *processor, const GraphViewTheme &theme, IntRangeParameter &parameter)
     : m_processor(processor),
       m_theme(theme),
       m_slider(juce::Slider::Rotary, juce::Slider::TextBoxBelow),
       m_binding(m_slider, parameter) {
+    m_slider.setLookAndFeel(&m_laf);
     addAndMakeVisible(m_slider);
   }
 
-  ~SliderPanel() override = default;
+  ~SliderPanel() override {
+    m_slider.setLookAndFeel(nullptr);
+  }
 
   void paint(juce::Graphics &g) override {
     g.fillAll(juce::Colour(m_theme.cNodeBackground));
@@ -114,6 +119,7 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(5, "keyboard");
     m.addItem(6, "note-filter");
     m.addItem(7, "velocity-curve");
+    m.addItem(8, "cc-curve");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -141,6 +147,13 @@ struct GraphEditor : public GraphViewComponent {
           break;
         case 7:
           addHostNode(new VelocityCurveProcessor(graph, "velocity-curve", 1, 1), 300, 300, position);
+          break;
+        case 8:
+          addHostNode(
+            new ControllerCurveProcessor(graph, "cc-curve", 1, 1),
+            ControllerCurveProcessor::MIN_WIDTH,
+            ControllerCurveProcessor::MIN_HEIGHT,
+            position);
           break;
         default:
           break;

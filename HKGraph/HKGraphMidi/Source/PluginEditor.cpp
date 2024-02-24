@@ -27,6 +27,10 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g) {
   g.setFont(15.0f);
 }
 
+void AudioPluginAudioProcessorEditor::recordUI() {
+  graphEditor->recordUI(processorRef.nodeDescriptors);
+}
+
 void AudioPluginAudioProcessorEditor::resized() {
   graphEditor->setBounds(getLocalBounds());
   processorRef.preferences.editorWidth = graphEditor->getWidth();
