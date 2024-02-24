@@ -128,7 +128,7 @@ private:
 
 struct NoteFilterProcessor : public KeyboardProcessor {
   static constexpr int MIN_WIDTH = 400;
-  static constexpr int MIN_HEIGHT = 150;
+  static constexpr int MIN_HEIGHT = 130;
 
   GraphKeyboardModel model;
 
@@ -289,33 +289,33 @@ struct NoteFilterProcessor : public KeyboardProcessor {
       controls.flexWrap = juce::FlexBox::Wrap::wrap;
       controls.alignItems = juce::FlexBox::AlignItems::flexStart;
       juce::FlexItem::Margin sliderMargin(
-        2.0f, // top
-        2.0f, // right
-        5.0f, // bottom
+        0.0f, // top
+        5.0f, // right
+        0.0f, // bottom
         5.0f  // left
       );
       controls.items.add(
         juce::FlexItem(sliderBeginNoteRange)
-          .withMinHeight(30.0f)
+          .withMinHeight(20.0f)
           .withMinWidth(100.0f)
           .withFlex(0.4f)
           .withMargin(sliderMargin));
       controls.items.add(
         juce::FlexItem(sliderEndNoteRange)
-          .withMinHeight(30.0f)
+          .withMinHeight(20.0f)
           .withMinWidth(100.0f)
           .withFlex(0.4f)
           .withMargin(sliderMargin));
       juce::FlexItem::Margin controlsMargin(
-        5.0f, // left
+        0.0f, // top
         5.0f, // right
-        5.0f, // top
-        5.0f  // bottom
+        0.0f, // bottom
+        5.0f  // left
       );
       flexBox.items.add(
         juce::FlexItem(controls)
           .withMinWidth(NoteFilterProcessor::MIN_WIDTH)
-          .withMinHeight(30.0f)
+          .withMinHeight(20.0f)
           .withFlex(1.0f)
           .withMargin(controlsMargin));
 

@@ -52,6 +52,7 @@ Old implementation is now on the `legacy` branch
 
 - CurveEditor (slightly modified) [MIT] - [MIDI-Transformer](https://github.com/austensatterlee/MIDI-Transformer)
 - uuid [MIT] - [stduuid](https://github.com/mariusbancila/stduuid)
+- Element UI components [GPL] - [Elements](https://github.com/kushview/element)
 
 ### License
 
