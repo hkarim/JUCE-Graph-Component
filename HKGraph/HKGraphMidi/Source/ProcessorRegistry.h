@@ -11,6 +11,7 @@
 #include "TransposeProcessor.h"
 #include "CurveProcessor.h"
 #include "ChordSplitterProcessor.h"
+#include "PianoRollProcessor.h"
 
 struct ProcessorRegistry {
 
@@ -38,6 +39,8 @@ struct ProcessorRegistry {
       nodeProcessor = new VelocityCurveProcessor(graph);
     else if (typeId == Processors::controllerCurveProcessor)
       nodeProcessor = new ControllerCurveProcessor(graph);
+    else if (typeId == Processors::pianoRollProcessor)
+      nodeProcessor = new PianoRollProcessor(graph);
 
     return nodeProcessor;
   }

@@ -14,6 +14,7 @@ struct Processors {
   static const std::string transposeProcessor;
   static const std::string velocityCurveProcessor;
   static const std::string controllerCurveProcessor;
+  static const std::string pianoRollProcessor;
 };
 
 struct Block {

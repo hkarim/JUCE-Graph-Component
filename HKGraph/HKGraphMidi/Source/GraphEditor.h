@@ -15,6 +15,7 @@
 #include "NoteFilterProcessor.h"
 #include "ChordSplitterProcessor.h"
 #include "GraphLookAndFeel.h"
+#include "PianoRollProcessor.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;
@@ -120,6 +121,7 @@ struct GraphEditor : public GraphViewComponent {
     m.addItem(6, "note-filter");
     m.addItem(7, "velocity-curve");
     m.addItem(8, "cc-curve");
+    m.addItem(9, "piano-roll");
     auto selection = [&](int result) {
       auto position = getMouseXYRelative().toFloat();
       switch (result) {
@@ -153,6 +155,13 @@ struct GraphEditor : public GraphViewComponent {
             new ControllerCurveProcessor(graph, "cc-curve", 1, 1),
             ControllerCurveProcessor::MIN_WIDTH,
             ControllerCurveProcessor::MIN_HEIGHT,
+            position);
+          break;
+        case 9:
+          addHostNode(
+            new PianoRollProcessor(graph, "piano-roll", 1, 1),
+            PianoRollProcessor::MIN_WIDTH,
+            PianoRollProcessor::MIN_HEIGHT,
             position);
           break;
         default:
