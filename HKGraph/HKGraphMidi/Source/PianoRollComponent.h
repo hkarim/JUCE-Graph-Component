@@ -7,10 +7,11 @@ struct PianoRollTheme {
   static constexpr unsigned int whiteKeysBg = 0xff2a2d31;
   static constexpr unsigned int blackKeysBg = 0xff232528;
 
-  static constexpr unsigned int vBarLineFg = 0xff44484c;
-  static constexpr unsigned int vQuantizeLineFg = 0xff34373a;
   static constexpr unsigned int hWhiteLanesSeparatorFg = 0xff1f2123;
   static constexpr unsigned int hOctaveLanesSeparatorFg = 0xff3a3d42;
+  static constexpr unsigned int vBarSeparatorFg = 0xff3a3d42;
+  static constexpr unsigned int vSubBarFg = 0xff33363a;
+
   static constexpr int hWhiteLanesSeparatorHeight = 1;
   static constexpr int vBarSeparatorWidth = 1;
 
@@ -22,10 +23,13 @@ struct NoteGridComponent : juce::Component {
   const juce::Colour cBlackKeysBg{PianoRollTheme::blackKeysBg};
   const juce::Colour cWhiteLanesLineFg{PianoRollTheme::hWhiteLanesSeparatorFg};
   const juce::Colour cOctaveLanesSeparatorFg{PianoRollTheme::hOctaveLanesSeparatorFg};
+  const juce::Colour cBarSeparatorFg{PianoRollTheme::vBarSeparatorFg};
+  const juce::Colour cSubBarFg{PianoRollTheme::vSubBarFg};
 
   int laneHeight{8};
   int bars{32};
   int barWidth{64};
+  int quantize{0};
 
   NoteGridComponent() : juce::Component() {
   }
@@ -86,9 +90,18 @@ struct NoteGridComponent : juce::Component {
     y = 0;
     while (i <= bars) {
       x = i * barWidth;
-      g.setColour(cOctaveLanesSeparatorFg);
+      g.setColour(cBarSeparatorFg);
       g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
       ++i;
+      if (quantize > 1) {
+        auto sub = barWidth / quantize;
+        for (auto j = 1; j < barWidth; j += sub) {
+          g.setColour(juce::Colour(cSubBarFg));
+          x += sub;
+          g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
+        }
+      }
+
     }
   }
 

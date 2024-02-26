@@ -58,13 +58,15 @@ struct PianoRollProcessor : public NodeProcessor {
     NoteGridComponent noteGridComponent;
     juce::Slider sliderNoteGridLaneHeight;
     juce::Slider sliderNoteGridBarWidth;
+    juce::Slider sliderNoteGridQuantize;
 
     Panel(PianoRollProcessor *p, const GraphViewTheme &viewTheme)
       : ConstrainedComponent(),
         processor(p),
         theme(viewTheme),
         sliderNoteGridLaneHeight(juce::Slider::LinearBar, juce::Slider::NoTextBox),
-        sliderNoteGridBarWidth(juce::Slider::LinearBar, juce::Slider::NoTextBox){
+        sliderNoteGridBarWidth(juce::Slider::LinearBar, juce::Slider::NoTextBox),
+        sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
       m_constrains.setMinimumSize(200, 200);
 
       noteGridComponent.setSize(
@@ -95,6 +97,15 @@ struct PianoRollProcessor : public NodeProcessor {
         noteGridComponent.repaint();
       };
       addAndMakeVisible(sliderNoteGridBarWidth);
+
+      sliderNoteGridQuantize.setRange(noteGridComponent.quantize, 6, 1);
+      sliderNoteGridQuantize.setTextBoxIsEditable(false);
+      sliderNoteGridQuantize.onValueChange = [this]() {
+        noteGridComponent.quantize =
+          static_cast<int>(std::pow(2, static_cast<int>(sliderNoteGridQuantize.getValue())));
+        noteGridComponent.repaint();
+      };
+      addAndMakeVisible(sliderNoteGridQuantize);
     }
 
     ~Panel() override = default;
@@ -143,6 +154,14 @@ struct PianoRollProcessor : public NodeProcessor {
           .withMargin(margin));
       controls.items.add(
         juce::FlexItem(sliderNoteGridBarWidth)
+          .withMinHeight(10.0f)
+          .withMaxHeight(10.0f)
+          .withMinWidth(40.0f)
+          .withMaxWidth(40.0f)
+          .withFlex(0.2f)
+          .withMargin(margin));
+      controls.items.add(
+        juce::FlexItem(sliderNoteGridQuantize)
           .withMinHeight(10.0f)
           .withMaxHeight(10.0f)
           .withMinWidth(40.0f)
