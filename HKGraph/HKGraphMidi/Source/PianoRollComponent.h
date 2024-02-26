@@ -12,7 +12,7 @@ struct PianoRollTheme {
   static constexpr unsigned int vBarSeparatorFg = 0xff3a3d42;
   static constexpr unsigned int vSubBarFg = 0xff33363a;
 
-  static constexpr int hWhiteLanesSeparatorHeight = 1;
+  static constexpr int hLaneSeparatorHeight = 1;
   static constexpr int vBarSeparatorWidth = 1;
 
 };
@@ -30,17 +30,17 @@ struct NoteComponent : juce::Component {
     auto bounds = getLocalBounds();
 
     if (selected) {
-      g.setColour(juce::Colours::orange);
+      g.setColour(juce::Colour(0xffe8d5c9));
     }
     else {
-      g.setColour(juce::Colours::orange.darker());
+      g.setColour(juce::Colour(0xffb8744a));
     }
     g.fillRect(bounds);
 
     juce::Path p;
     p.addRectangle(bounds);
     g.setColour(juce::Colours::whitesmoke);
-    g.strokePath(p, juce::PathStrokeType(0.4f));
+    g.strokePath(p, juce::PathStrokeType(0.2f));
   }
 
 private:
@@ -60,6 +60,8 @@ struct NoteGridComponent : juce::Component {
   int bars{32};
   int barWidth{64};
   int quantize{0};
+  float scaledWidth{1.0f};
+  float scaledHeight{1.0f};
 
   std::vector<NoteComponent *> notes;
 
@@ -147,6 +149,8 @@ struct NoteGridComponent : juce::Component {
     auto i = 0;
     auto x = 0;
     auto y = 0;
+    auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
+    auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
     while (i <= 127) {
       auto n = 127 - i; // the note number
       auto r = n % 12;
@@ -171,7 +175,11 @@ struct NoteGridComponent : juce::Component {
         // the colour differs whether we're separating octaves or just 2 white keys
         auto c = r == 0 ? cOctaveLanesSeparatorFg : cWhiteLanesLineFg;
         g.setColour(c);
-        g.fillRect(x, y - PianoRollTheme::hWhiteLanesSeparatorHeight, w, PianoRollTheme::hWhiteLanesSeparatorHeight);
+        g.fillRect(
+          static_cast<float>(x),
+          static_cast<float>(y - PianoRollTheme::hLaneSeparatorHeight),
+          static_cast<float>(w),
+          hLaneSeparatorHeight);
 
         // draw the consecutive white lane
         g.setColour(cWhiteKeysBg);
@@ -187,7 +195,11 @@ struct NoteGridComponent : juce::Component {
     while (i <= bars) {
       x = i * barWidth;
       g.setColour(cBarSeparatorFg);
-      g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
+      g.fillRect(
+        static_cast<float>(x),
+        static_cast<float>(y),
+        vBarSeparatorWidth,
+        static_cast<float>(h));
       ++i;
       // draw quantize bar lines
       if (quantize > 1) {
@@ -195,7 +207,11 @@ struct NoteGridComponent : juce::Component {
         for (auto j = 1; j < barWidth; j += sub) {
           g.setColour(juce::Colour(cSubBarFg));
           x += sub;
-          g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
+          g.fillRect(
+            static_cast<float>(x),
+            static_cast<float>(y),
+            vBarSeparatorWidth,
+            static_cast<float>(h));
         }
       }
     }
