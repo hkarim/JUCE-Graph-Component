@@ -15,11 +15,20 @@ struct PianoRollTheme {
   static constexpr int hLaneSeparatorHeight = 1;
   static constexpr int vBarSeparatorWidth = 1;
 
+  static constexpr unsigned int noteSelectedBg = 0xffe8d5c9;
+  static constexpr unsigned int noteUnselectedBg = 0xffb8744a;
+  static constexpr float noteBorderWidth = 0.2f;
+
 };
 
 struct NoteComponent : juce::Component {
 
   bool selected{false};
+  const juce::Colour cSelectedBg{PianoRollTheme::noteSelectedBg};
+  const juce::Colour cUnselectedBg{PianoRollTheme::noteUnselectedBg};
+  const juce::Colour cBorderFg{juce::Colours::whitesmoke};
+  const float borderWidth{PianoRollTheme::noteBorderWidth};
+  juce::Point<int> mouseDownPosition{};
 
   NoteComponent() : juce::Component() {
   }
@@ -30,17 +39,16 @@ struct NoteComponent : juce::Component {
     auto bounds = getLocalBounds();
 
     if (selected) {
-      g.setColour(juce::Colour(0xffe8d5c9));
-    }
-    else {
-      g.setColour(juce::Colour(0xffb8744a));
+      g.setColour(cSelectedBg);
+    } else {
+      g.setColour(cUnselectedBg);
     }
     g.fillRect(bounds);
 
     juce::Path p;
     p.addRectangle(bounds);
-    g.setColour(juce::Colours::whitesmoke);
-    g.strokePath(p, juce::PathStrokeType(0.2f));
+    g.setColour(cBorderFg);
+    g.strokePath(p, juce::PathStrokeType(borderWidth));
   }
 
 private:
@@ -77,38 +85,28 @@ struct NoteGridComponent : juce::Component {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         note->selected = true;
         note->repaint();
+        note->mouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
       }
     }
 
     void mouseDrag(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        auto minY = 0;
-        auto maxY = parent->getHeight() - note->getHeight();
-        auto position = note->getPosition();
-        auto delta = note->getLocalPoint(note, e.getPosition());
-        auto up = delta.y < 0;
-        auto down = !up;
-        auto right = delta.x > 0;
-        auto left = !right;
-
-        auto destination = position + delta;
-        auto verticalThreshold = parent->laneHeight / 2;
-
-        auto x = position.x;
-        auto y = position.y;
-        if (up && destination.y >= minY && std::abs(delta.y) >= verticalThreshold) {
-          y = y - parent->laneHeight;
-        }
-        if (down && destination.y <= maxY && std::abs(delta.y) >= verticalThreshold) {
-          y = y + parent->laneHeight;
-        }
-
-        note->setBounds(x, y, note->getWidth(), note->getHeight());
+        auto bounds = note->getBounds();
+        bounds += e.getEventRelativeTo(note).getPosition() - note->mouseDownPosition;
+        note->setBounds(bounds);
       }
     }
 
     void mouseUp(const juce::MouseEvent &e) override {
-      juce::ignoreUnused(e);
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        auto position = e.getEventRelativeTo(parent).getPosition();
+        note->setBounds(
+          parent->nearestBar(position.x),
+          parent->nearestLane(position.y),
+          note->getWidth(),
+          note->getHeight()
+        );
+      }
     }
 
     void mouseDoubleClick(const juce::MouseEvent &e) override {
@@ -148,7 +146,7 @@ struct NoteGridComponent : juce::Component {
     // top: G8 127,  bottom: C-2 0
     auto i = 0;
     auto x = 0;
-    auto y = 0;
+    int y;
     auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
     auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
     while (i <= 127) {
@@ -222,7 +220,7 @@ struct NoteGridComponent : juce::Component {
 
   void mouseDown(const juce::MouseEvent &e) override {
     juce::ignoreUnused(e);
-    for (auto &n : notes) {
+    for (auto &n: notes) {
       n->selected = false;
       n->repaint();
     }
@@ -234,12 +232,18 @@ struct NoteGridComponent : juce::Component {
 
   [[nodiscard]] int nearestLane(int y) const {
     auto possibleLaneNumber = y / laneHeight;
-    return possibleLaneNumber * laneHeight;
+    auto yp = possibleLaneNumber * laneHeight;
+    if (yp < 0) yp = 0;
+    else if (yp > getHeight() - laneHeight) yp = getHeight() - laneHeight;
+    return yp;
   }
 
   [[nodiscard]] int nearestBar(int x) const {
     auto possibleBarNumber = x / barWidth;
-    return possibleBarNumber * barWidth;
+    auto xp = possibleBarNumber * barWidth;
+    if (xp < 0) xp = 0;
+    else if (xp > getWidth() - barWidth) xp = getWidth() - barWidth;
+    return xp;
   }
 
   void addNote(const juce::MouseEvent &e) {
@@ -253,7 +257,7 @@ struct NoteGridComponent : juce::Component {
   }
 
   void removeNote(NoteComponent *note) {
-    auto p = std::erase_if(notes, [&](auto &n) { return n == note;});
+    auto p = std::erase_if(notes, [&](auto &n) { return n == note; });
     if (p != 0) {
       note->removeMouseListener(mouseListener.get());
       removeChildComponent(note);
