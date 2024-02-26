@@ -102,7 +102,8 @@ struct PianoRollProcessor : public NodeProcessor {
       sliderNoteGridQuantize.setTextBoxIsEditable(false);
       sliderNoteGridQuantize.onValueChange = [this]() {
         noteGridComponent.quantize =
-          static_cast<int>(std::pow(2, static_cast<int>(sliderNoteGridQuantize.getValue())));
+          static_cast<int>(
+            std::pow(2, static_cast<int>(std::ceil(sliderNoteGridQuantize.getValue()))));
         noteGridComponent.repaint();
       };
       addAndMakeVisible(sliderNoteGridQuantize);

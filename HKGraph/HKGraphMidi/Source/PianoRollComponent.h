@@ -93,6 +93,7 @@ struct NoteGridComponent : juce::Component {
       g.setColour(cBarSeparatorFg);
       g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
       ++i;
+      // draw quantize bar lines
       if (quantize > 1) {
         auto sub = barWidth / quantize;
         for (auto j = 1; j < barWidth; j += sub) {
@@ -101,7 +102,6 @@ struct NoteGridComponent : juce::Component {
           g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
         }
       }
-
     }
   }
 
