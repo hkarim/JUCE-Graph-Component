@@ -17,6 +17,23 @@ struct PianoRollTheme {
 
 };
 
+struct NoteComponent : juce::Component {
+
+  NoteComponent() : juce::Component() {
+  }
+
+  ~NoteComponent() override = default;
+
+  void paint(juce::Graphics &g) override {
+    auto bounds = getLocalBounds();
+    g.setColour(juce::Colours::orange);
+    g.fillRect(bounds);
+  }
+
+private:
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteComponent)
+};
+
 struct NoteGridComponent : juce::Component {
 
   const juce::Colour cWhiteKeysBg{PianoRollTheme::whiteKeysBg};
@@ -31,10 +48,47 @@ struct NoteGridComponent : juce::Component {
   int barWidth{64};
   int quantize{0};
 
-  NoteGridComponent() : juce::Component() {
+  std::vector<NoteComponent *> notes;
+
+  juce::ComponentDragger dragger;
+
+  struct ChildrenMouseListener : juce::MouseListener {
+
+    NoteGridComponent *parent;
+
+    explicit ChildrenMouseListener(NoteGridComponent *p) : juce::MouseListener(), parent(p) {}
+
+    ~ChildrenMouseListener() override = default;
+
+    void mouseDown(const juce::MouseEvent &e) override {
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        parent->dragger.startDraggingComponent(note, e);
+      }
+    }
+
+    void mouseDrag(const juce::MouseEvent &e) override {
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        parent->dragger.dragComponent(note, e, nullptr);
+      }
+    }
+
+  };
+
+  std::unique_ptr<ChildrenMouseListener> mouseListener;
+
+  NoteGridComponent() :
+    juce::Component(),
+    mouseListener(new ChildrenMouseListener(this)) {
+
   }
 
-  ~NoteGridComponent() override = default;
+  ~NoteGridComponent() override {
+    for (auto &n: notes) {
+      n->removeMouseListener(mouseListener.get());
+      delete n;
+    }
+  }
+
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
@@ -104,6 +158,18 @@ struct NoteGridComponent : juce::Component {
       }
     }
   }
+
+  void mouseDoubleClick(const juce::MouseEvent &e) override {
+    juce::ignoreUnused(e);
+    auto relativeEvent = e.getEventRelativeTo(this);
+    auto position = relativeEvent.getPosition();
+    auto n = new NoteComponent();
+    n->addMouseListener(mouseListener.get(), false);
+    n->setBounds(position.x, position.y, 100, laneHeight);
+    notes.push_back(n);
+    addAndMakeVisible(n);
+  }
+
 
 private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteGridComponent)
