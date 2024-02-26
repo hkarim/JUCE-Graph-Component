@@ -12,33 +12,41 @@ struct PianoRollTheme {
   static constexpr unsigned int hWhiteLanesSeparatorFg = 0xff1f2123;
   static constexpr unsigned int hOctaveLanesSeparatorFg = 0xff3a3d42;
   static constexpr int hWhiteLanesSeparatorHeight = 1;
+  static constexpr int vBarSeparatorWidth = 1;
 
 };
 
 struct NoteGridComponent : juce::Component {
 
-  int laneHeight{8};
-  NoteGridComponent(): juce::Component() {
+  const juce::Colour cWhiteKeysBg{PianoRollTheme::whiteKeysBg};
+  const juce::Colour cBlackKeysBg{PianoRollTheme::blackKeysBg};
+  const juce::Colour cWhiteLanesLineFg{PianoRollTheme::hWhiteLanesSeparatorFg};
+  const juce::Colour cOctaveLanesSeparatorFg{PianoRollTheme::hOctaveLanesSeparatorFg};
 
+  int laneHeight{8};
+  int bars{32};
+  int barWidth{64};
+
+  NoteGridComponent() : juce::Component() {
   }
+
+  ~NoteGridComponent() override = default;
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
     auto w = bounds.getWidth();
-    //auto h = bounds.getHeight();
+    auto h = bounds.getHeight();
 
     // c   d   e f   g   a   b
     // w   w   w w   w   w   w
     // 0 1 2 3 4 5 6 7 8 9 1011
-    auto cWhiteKeysBg = juce::Colour(PianoRollTheme::whiteKeysBg);
-    auto cBlackKeysBg = juce::Colour(PianoRollTheme::blackKeysBg);
-    auto cWhiteLanesLineFg = juce::Colour(PianoRollTheme::hWhiteLanesSeparatorFg);
-    auto cOctaveLanesSeparatorFg = juce::Colour(PianoRollTheme::hOctaveLanesSeparatorFg);
+
 
     // draw white and black lanes
     // top: G8 127,  bottom: C-2 0
     auto i = 0;
     auto x = 0;
+    auto y = 0;
     while (i <= 127) {
       auto n = 127 - i; // the note number
       auto r = n % 12;
@@ -50,7 +58,7 @@ struct NoteGridComponent : juce::Component {
       else
         g.setColour(cBlackKeysBg);
 
-      auto y = i *laneHeight;
+      y = i * laneHeight;
       // fill the lane
       g.fillRect(x, y, w, laneHeight);
 
@@ -61,7 +69,7 @@ struct NoteGridComponent : juce::Component {
         y = i * laneHeight;
         // draw the separator at the bottom of the first shifting it up by the separator height
         // the colour differs whether we're separating octaves or just 2 white keys
-        auto c = r == 0 ?  cOctaveLanesSeparatorFg : cWhiteLanesLineFg;
+        auto c = r == 0 ? cOctaveLanesSeparatorFg : cWhiteLanesLineFg;
         g.setColour(c);
         g.fillRect(x, y - PianoRollTheme::hWhiteLanesSeparatorHeight, w, PianoRollTheme::hWhiteLanesSeparatorHeight);
 
@@ -70,13 +78,16 @@ struct NoteGridComponent : juce::Component {
         g.fillRect(x, y, w, laneHeight);
       }
 
-      // if we are between 2 white lanes, draw a darker line to separate them
-//      auto whiteSeparator = r == 1 || r == 7;
-//      if (whiteSeparator) {
-//        g.setColour(cWhiteLanesLineFg);
-//        g.fillRect(x, y + PianoRollTheme::laneHeight, w, PianoRollTheme::hWhiteLanesSeparatorHeight);
-//      }
+      ++i;
+    }
 
+    // draw bar lines
+    i = 0;
+    y = 0;
+    while (i <= bars) {
+      x = i * barWidth;
+      g.setColour(cOctaveLanesSeparatorFg);
+      g.fillRect(x, y, PianoRollTheme::vBarSeparatorWidth, h);
       ++i;
     }
   }
