@@ -24,6 +24,7 @@ struct PianoRollTheme {
 struct NoteComponent : juce::Component {
 
   bool selected{false};
+  bool dragging{false};
   const juce::Colour cSelectedBg{PianoRollTheme::noteSelectedBg};
   const juce::Colour cUnselectedBg{PianoRollTheme::noteUnselectedBg};
   const juce::Colour cBorderFg{juce::Colours::whitesmoke};
@@ -93,6 +94,7 @@ struct NoteGridComponent : juce::Component {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         auto bounds = note->getBounds();
         bounds += e.getEventRelativeTo(note).getPosition() - note->mouseDownPosition;
+        note->dragging = true;
         note->setBounds(bounds);
       }
     }
@@ -100,12 +102,15 @@ struct NoteGridComponent : juce::Component {
     void mouseUp(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         auto position = e.getEventRelativeTo(parent).getPosition();
-        note->setBounds(
-          parent->nearestBar(position.x),
-          parent->nearestLane(position.y),
-          note->getWidth(),
-          note->getHeight()
-        );
+        if (note->dragging) {
+          note->setBounds(
+            parent->nearestBar(position.x),
+            parent->nearestLane(position.y),
+            note->getWidth(),
+            note->getHeight()
+          );
+          note->dragging = false;
+        }
       }
     }
 
@@ -239,8 +244,10 @@ struct NoteGridComponent : juce::Component {
   }
 
   [[nodiscard]] int nearestBar(int x) const {
-    auto possibleBarNumber = x / barWidth;
-    auto xp = possibleBarNumber * barWidth;
+    auto divisor = barWidth;
+    if (quantize > 1) divisor = barWidth / quantize;
+    auto possibleBarNumber = x / divisor;
+    auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;
     else if (xp > getWidth() - barWidth) xp = getWidth() - barWidth;
     return xp;
