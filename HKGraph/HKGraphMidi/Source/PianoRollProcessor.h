@@ -76,26 +76,22 @@ struct PianoRollProcessor : public NodeProcessor {
       pianoRollViewPort.setViewedComponent(&noteGridComponent, false);
       addAndMakeVisible(pianoRollViewPort);
 
-      sliderNoteGridLaneHeight.setRange(noteGridComponent.laneHeight, 128, 1);
-      sliderNoteGridLaneHeight.setTextBoxIsEditable(false);
-      sliderNoteGridLaneHeight.onValueChange = [this]() {
-        noteGridComponent.laneHeight = static_cast<int>(sliderNoteGridLaneHeight.getValue());
-        noteGridComponent.setSize(
-          noteGridComponent.bars * noteGridComponent.barWidth,
-          127 * noteGridComponent.laneHeight);
-        noteGridComponent.repaint();
+      sliderNoteGridLaneHeight.setRange(0.5f, 4.0f, 0.1f);
+      sliderNoteGridLaneHeight.setValue(1.0f);
+      sliderNoteGridBarWidth.setRange(0.5f, 4.0f, 0.1f);
+      sliderNoteGridBarWidth.setValue(1.0f);
+      auto onScaleChange = [this]() {
+        auto xp = static_cast<float>(sliderNoteGridBarWidth.getValue());
+        auto yp = static_cast<float>(sliderNoteGridLaneHeight.getValue());
+        noteGridComponent.setTransform(juce::AffineTransform().scaled(xp, yp));
       };
-      addAndMakeVisible(sliderNoteGridLaneHeight);
 
-      sliderNoteGridBarWidth.setRange(noteGridComponent.barWidth, 512, 8);
+      sliderNoteGridLaneHeight.setTextBoxIsEditable(false);
+      sliderNoteGridLaneHeight.onValueChange = onScaleChange;
       sliderNoteGridBarWidth.setTextBoxIsEditable(false);
-      sliderNoteGridBarWidth.onValueChange = [this]() {
-        noteGridComponent.barWidth = static_cast<int>(sliderNoteGridBarWidth.getValue());
-        noteGridComponent.setSize(
-          noteGridComponent.bars * noteGridComponent.barWidth,
-          127 * noteGridComponent.laneHeight);
-        noteGridComponent.repaint();
-      };
+      sliderNoteGridBarWidth.onValueChange = onScaleChange;
+
+      addAndMakeVisible(sliderNoteGridLaneHeight);
       addAndMakeVisible(sliderNoteGridBarWidth);
 
       sliderNoteGridQuantize.setRange(noteGridComponent.quantize, 6, 1);

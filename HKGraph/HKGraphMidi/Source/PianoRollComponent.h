@@ -19,6 +19,8 @@ struct PianoRollTheme {
 
 struct NoteComponent : juce::Component {
 
+  bool selected{false};
+
   NoteComponent() : juce::Component() {
   }
 
@@ -26,8 +28,19 @@ struct NoteComponent : juce::Component {
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
-    g.setColour(juce::Colours::orange);
+
+    if (selected) {
+      g.setColour(juce::Colours::orange);
+    }
+    else {
+      g.setColour(juce::Colours::orange.darker());
+    }
     g.fillRect(bounds);
+
+    juce::Path p;
+    p.addRectangle(bounds);
+    g.setColour(juce::Colours::whitesmoke);
+    g.strokePath(p, juce::PathStrokeType(0.4f));
   }
 
 private:
@@ -50,8 +63,6 @@ struct NoteGridComponent : juce::Component {
 
   std::vector<NoteComponent *> notes;
 
-  juce::ComponentDragger dragger;
-
   struct ChildrenMouseListener : juce::MouseListener {
 
     NoteGridComponent *parent;
@@ -62,13 +73,45 @@ struct NoteGridComponent : juce::Component {
 
     void mouseDown(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        parent->dragger.startDraggingComponent(note, e);
+        note->selected = true;
+        note->repaint();
       }
     }
 
     void mouseDrag(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        parent->dragger.dragComponent(note, e, nullptr);
+        auto minY = 0;
+        auto maxY = parent->getHeight() - note->getHeight();
+        auto position = note->getPosition();
+        auto delta = note->getLocalPoint(note, e.getPosition());
+        auto up = delta.y < 0;
+        auto down = !up;
+        auto right = delta.x > 0;
+        auto left = !right;
+
+        auto destination = position + delta;
+        auto verticalThreshold = parent->laneHeight / 2;
+
+        auto x = position.x;
+        auto y = position.y;
+        if (up && destination.y >= minY && std::abs(delta.y) >= verticalThreshold) {
+          y = y - parent->laneHeight;
+        }
+        if (down && destination.y <= maxY && std::abs(delta.y) >= verticalThreshold) {
+          y = y + parent->laneHeight;
+        }
+
+        note->setBounds(x, y, note->getWidth(), note->getHeight());
+      }
+    }
+
+    void mouseUp(const juce::MouseEvent &e) override {
+      juce::ignoreUnused(e);
+    }
+
+    void mouseDoubleClick(const juce::MouseEvent &e) override {
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        parent->removeNote(note);
       }
     }
 
@@ -79,7 +122,6 @@ struct NoteGridComponent : juce::Component {
   NoteGridComponent() :
     juce::Component(),
     mouseListener(new ChildrenMouseListener(this)) {
-
   }
 
   ~NoteGridComponent() override {
@@ -159,15 +201,48 @@ struct NoteGridComponent : juce::Component {
     }
   }
 
-  void mouseDoubleClick(const juce::MouseEvent &e) override {
+  void resized() override {
+  }
+
+  void mouseDown(const juce::MouseEvent &e) override {
     juce::ignoreUnused(e);
+    for (auto &n : notes) {
+      n->selected = false;
+      n->repaint();
+    }
+  }
+
+  void mouseDoubleClick(const juce::MouseEvent &e) override {
+    addNote(e);
+  }
+
+  [[nodiscard]] int nearestLane(int y) const {
+    auto possibleLaneNumber = y / laneHeight;
+    return possibleLaneNumber * laneHeight;
+  }
+
+  [[nodiscard]] int nearestBar(int x) const {
+    auto possibleBarNumber = x / barWidth;
+    return possibleBarNumber * barWidth;
+  }
+
+  void addNote(const juce::MouseEvent &e) {
     auto relativeEvent = e.getEventRelativeTo(this);
     auto position = relativeEvent.getPosition();
     auto n = new NoteComponent();
     n->addMouseListener(mouseListener.get(), false);
-    n->setBounds(position.x, position.y, 100, laneHeight);
+    n->setBounds(nearestBar(position.x), nearestLane(position.y), barWidth, laneHeight);
     notes.push_back(n);
     addAndMakeVisible(n);
+  }
+
+  void removeNote(NoteComponent *note) {
+    auto p = std::erase_if(notes, [&](auto &n) { return n == note;});
+    if (p != 0) {
+      note->removeMouseListener(mouseListener.get());
+      removeChildComponent(note);
+      delete note;
+    }
   }
 
 
