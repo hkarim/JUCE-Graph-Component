@@ -157,7 +157,14 @@ struct NoteGridComponent : juce::Component {
     void mouseUp(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         parent->noteMouseUp(note, e);
-        parent->updateNoteModel(note);
+        if (parent->noteMultiSelectionOn) {
+          for (auto &n : parent->notes) {
+            parent->updateNoteModel(n);
+            n->repaint();
+          }
+        } else {
+          parent->updateNoteModel(note);
+        }
       }
     }
 
@@ -307,23 +314,25 @@ struct NoteGridComponent : juce::Component {
   }
 
   void noteMouseMove(NoteComponent *note, const juce::MouseEvent &e) {
-    auto relative = e.getEventRelativeTo(note);
-    auto localPosition = relative.getPosition();
-    auto delta = std::abs(note->getWidth() - localPosition.x);
-    if (localPosition.x <= 3) {
-      note->setMouseCursor(leftEdgeResizeCursor);
-      note->resizingRight = false;
-      note->resizingLeft = true;
-      note->beforeResizingBounds = note->getBounds();
-    } else if (delta <= 3) {
-      note->setMouseCursor(rightEdgeResizeCursor);
-      note->resizingRight = true;
-      note->resizingLeft = false;
-      note->beforeResizingBounds = note->getBounds();
-    } else {
-      note->setMouseCursor(normalCursor);
-      note->resizingRight = false;
-      note->resizingLeft = false;
+    if (!noteMultiSelectionOn) {
+      auto relative = e.getEventRelativeTo(note);
+      auto localPosition = relative.getPosition();
+      auto delta = std::abs(note->getWidth() - localPosition.x);
+      if (localPosition.x <= 3) {
+        note->setMouseCursor(leftEdgeResizeCursor);
+        note->resizingRight = false;
+        note->resizingLeft = true;
+        note->beforeResizingBounds = note->getBounds();
+      } else if (delta <= 3) {
+        note->setMouseCursor(rightEdgeResizeCursor);
+        note->resizingRight = true;
+        note->resizingLeft = false;
+        note->beforeResizingBounds = note->getBounds();
+      } else {
+        note->setMouseCursor(normalCursor);
+        note->resizingRight = false;
+        note->resizingLeft = false;
+      }
     }
   }
 
@@ -337,61 +346,32 @@ struct NoteGridComponent : juce::Component {
     if (noteMultiSelectionOn && !note->selected) {
       noteMultiSelectionOn = false;
     }
-    note->selected = true;
-    note->repaint();
-    note->dragMouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
-    for (auto &n: notes) {
-      if (n != note && n->selected) {
-        n->selected = false;
-        n->repaint();
+    if (noteMultiSelectionOn && note->selected) {
+      for (auto &n: notes) {
+        n->dragMouseDownPosition = e.getEventRelativeTo(n).getMouseDownPosition();
+      }
+    }
+    else {
+      note->selected = true;
+      note->repaint();
+      for (auto &n: notes) {
+        n->dragMouseDownPosition = e.getEventRelativeTo(n).getMouseDownPosition();
+        if (n != note && n->selected) {
+          n->selected = false;
+          n->repaint();
+        }
       }
     }
   }
 
   void noteMouseDrag(NoteComponent *note, const juce::MouseEvent &e) {
-    auto mousePosition = e.getEventRelativeTo(this).getPosition();
-    auto localMousePosition = e.getEventRelativeTo(note).getPosition();
-    if (note->resizingRight || note->resizingLeft) { // handle resizing first
-      if (note->resizingRight && mousePosition.x <= this->getWidth()) {
-        auto delta = localMousePosition - note->dragMouseDownPosition;
-        if (e.mods.isShiftDown()) { // freely resize from the right if shift is down
-          note->setSize(
-            note->beforeResizingBounds.getWidth() + delta.x,
-            note->beforeResizingBounds.getHeight());
-        } else { // snap to the nearest bar if shift is **not** down
-          auto w = nearestBar(note->beforeResizingBounds.getWidth() + delta.x, note->getWidth());
-          auto x = nearestBar(note->getPosition().x, note->beforeResizingBounds.getWidth());
-          auto compensation = x - note->getPosition().x;
-          w = w + compensation; // if the left position is not aligned with a bar, we need to compensate
-          if (w == 0) w = note->beforeResizingBounds.getWidth();
-          note->setSize(
-            w,
-            note->beforeResizingBounds.getHeight());
-        }
-      } else if (note->resizingLeft && mousePosition.x >= 0) {
-        auto delta = note->dragMouseDownPosition - localMousePosition;
-        if (e.mods.isShiftDown()) { // freely resize from the left if shift is down
-          note->setBounds(
-            note->beforeResizingBounds.getX() - delta.x,
-            note->beforeResizingBounds.getY(),
-            note->beforeResizingBounds.getWidth() + delta.x,
-            note->beforeResizingBounds.getHeight());
-        } else { // snap to the nearest bar if shift is **not** down
-          auto x = note->beforeResizingBounds.getX();
-          auto y = note->beforeResizingBounds.getY();
-          auto w = note->beforeResizingBounds.getWidth();
-          auto h = note->beforeResizingBounds.getHeight();
-          auto shift = x - delta.x;
-          auto xp = nearestBar(shift, note->beforeResizingBounds.getWidth());
-          auto compensation = x - xp;
-          note->setBounds(xp, y, w + compensation, h);
-        }
+    if (noteMultiSelectionOn) {
+      for (auto &n : notes) {
+        if (n->selected) startNoteDrag(n, e);
       }
-    } else { // handle dragging the whole note
-      auto bounds = note->getBounds();
-      bounds += localMousePosition - note->dragMouseDownPosition;
-      note->dragging = true;
-      note->setBounds(bounds);
+    }
+    else {
+      startNoteDrag(note, e) ;
     }
   }
 
@@ -400,24 +380,88 @@ struct NoteGridComponent : juce::Component {
       note->resizingRight = false;
       note->resizingRight = false;
     } else if (note->dragging) {
-      auto mousePosition = e.getEventRelativeTo(this).getPosition();
-      auto notePosition = note->getPosition();
-      auto x = nearestBar(notePosition.x, note->getWidth());
-      if (e.mods.isShiftDown()) {
-        x = notePosition.x;
-      }
-      note->setBounds(
-        x,
-        nearestLane(mousePosition.y),
-        note->getWidth(),
-        note->getHeight()
-      );
-      note->dragging = false;
+       if (noteMultiSelectionOn) {
+         for (auto &n: notes) {
+           if (n->selected) endNoteDrag(n, e);
+         }
+       } else {
+         endNoteDrag(note, e);
+       }
     }
   }
 
   void noteMouseDoubleClick(NoteComponent *note, const juce::MouseEvent &) {
     removeNote(note);
+  }
+
+  void startNoteDrag(NoteComponent * note, const juce::MouseEvent &e) {
+    auto localMousePosition = e.getEventRelativeTo(note).getPosition();
+    if ((note->resizingRight || note->resizingLeft) && !noteMultiSelectionOn) { // handle resizing first
+      resizeNote(note, e);
+    } else { // handle dragging the whole note
+      auto bounds = note->getBounds();
+      bounds += localMousePosition - note->dragMouseDownPosition;
+      note->dragging = true;
+      updateNoteModel(note);
+      note->setBounds(bounds);
+    }
+  }
+
+  void endNoteDrag(NoteComponent *note, const juce::MouseEvent &e) const {
+    //auto mousePosition = e.getEventRelativeTo(this).getPosition();
+    auto notePosition = note->getPosition();
+    auto x = nearestBar(notePosition.x, note->getWidth());
+    if (e.mods.isShiftDown()) {
+      x = notePosition.x;
+    }
+    note->setBounds(
+      x,
+      //nearestLane(mousePosition.y),
+      nearestLane(notePosition.y),
+      note->getWidth(),
+      note->getHeight()
+    );
+    note->dragging = false;
+  }
+
+  void resizeNote(NoteComponent *note, const juce::MouseEvent &e) {
+    auto mousePosition = e.getEventRelativeTo(this).getPosition();
+    auto localMousePosition = e.getEventRelativeTo(note).getPosition();
+    if (note->resizingRight && mousePosition.x <= this->getWidth()) {
+      auto delta = localMousePosition - note->dragMouseDownPosition;
+      if (e.mods.isShiftDown()) { // freely resize from the right if shift is down
+        note->setSize(
+          note->beforeResizingBounds.getWidth() + delta.x,
+          note->beforeResizingBounds.getHeight());
+      } else { // snap to the nearest bar if shift is **not** down
+        auto w = nearestBar(note->beforeResizingBounds.getWidth() + delta.x, note->getWidth());
+        auto x = nearestBar(note->getPosition().x, note->beforeResizingBounds.getWidth());
+        auto compensation = x - note->getPosition().x;
+        w = w + compensation; // if the left position is not aligned with a bar, we need to compensate
+        if (w == 0) w = note->beforeResizingBounds.getWidth();
+        note->setSize(
+          w,
+          note->beforeResizingBounds.getHeight());
+      }
+    } else if (note->resizingLeft && mousePosition.x >= 0) {
+      auto delta = note->dragMouseDownPosition - localMousePosition;
+      if (e.mods.isShiftDown()) { // freely resize from the left if shift is down
+        note->setBounds(
+          note->beforeResizingBounds.getX() - delta.x,
+          note->beforeResizingBounds.getY(),
+          note->beforeResizingBounds.getWidth() + delta.x,
+          note->beforeResizingBounds.getHeight());
+      } else { // snap to the nearest bar if shift is **not** down
+        auto x = note->beforeResizingBounds.getX();
+        auto y = note->beforeResizingBounds.getY();
+        auto w = note->beforeResizingBounds.getWidth();
+        auto h = note->beforeResizingBounds.getHeight();
+        auto shift = x - delta.x;
+        auto xp = nearestBar(shift, note->beforeResizingBounds.getWidth());
+        auto compensation = x - xp;
+        note->setBounds(xp, y, w + compensation, h);
+      }
+    }
   }
 
   [[nodiscard]] int nearestLane(int y) const {
