@@ -25,11 +25,14 @@ struct NoteComponent : juce::Component {
 
   bool selected{false};
   bool dragging{false};
+  bool resizingRight{false};
+  bool resizingLeft{false};
+  juce::Rectangle<int> beforeResizingBounds{};
   const juce::Colour cSelectedBg{PianoRollTheme::noteSelectedBg};
   const juce::Colour cUnselectedBg{PianoRollTheme::noteUnselectedBg};
   const juce::Colour cBorderFg{juce::Colours::whitesmoke};
   const float borderWidth{PianoRollTheme::noteBorderWidth};
-  juce::Point<int> mouseDownPosition{};
+  juce::Point<int> dragMouseDownPosition{};
 
   NoteComponent() : juce::Component() {
   }
@@ -76,33 +79,87 @@ struct NoteGridComponent : juce::Component {
 
   struct ChildrenMouseListener : juce::MouseListener {
 
+    const juce::MouseCursor rightEdgeResizeCursor{juce::MouseCursor::StandardCursorType::RightEdgeResizeCursor};
+    const juce::MouseCursor leftEdgeResizeCursor{juce::MouseCursor::StandardCursorType::LeftEdgeResizeCursor};
+    const juce::MouseCursor normalCursor{juce::MouseCursor::StandardCursorType::NormalCursor};
+
     NoteGridComponent *parent;
 
     explicit ChildrenMouseListener(NoteGridComponent *p) : juce::MouseListener(), parent(p) {}
 
     ~ChildrenMouseListener() override = default;
 
+    void mouseMove(const juce::MouseEvent &e) override {
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        auto relative = e.getEventRelativeTo(note);
+        auto localPosition = relative.getPosition();
+        auto delta = std::abs(note->getWidth() - localPosition.x);
+        if (localPosition.x <= 3) {
+          note->setMouseCursor(leftEdgeResizeCursor);
+          note->resizingRight = false;
+          note->resizingLeft = true;
+          note->beforeResizingBounds = note->getBounds();
+        } else if (delta <= 3) {
+          note->setMouseCursor(rightEdgeResizeCursor);
+          note->resizingRight = true;
+          note->resizingLeft = false;
+          note->beforeResizingBounds = note->getBounds();
+        } else {
+          note->setMouseCursor(normalCursor);
+          note->resizingRight = false;
+          note->resizingLeft = false;
+        }
+      }
+    }
+
+    void mouseExit(const juce::MouseEvent &e) override {
+      if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
+        note->resizingRight = false;
+        note->resizingLeft = false;
+        note->setMouseCursor(normalCursor);
+      }
+    }
+
     void mouseDown(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         note->selected = true;
         note->repaint();
-        note->mouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
+        note->dragMouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
       }
     }
 
     void mouseDrag(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        auto bounds = note->getBounds();
-        bounds += e.getEventRelativeTo(note).getPosition() - note->mouseDownPosition;
-        note->dragging = true;
-        note->setBounds(bounds);
+        auto mousePosition = e.getEventRelativeTo(parent).getPosition();
+        auto localMousePosition = e.getEventRelativeTo(note).getPosition();
+        if (note->resizingRight || note->resizingLeft) {
+          if (note->resizingRight && mousePosition.x <= parent->getWidth()) {
+            auto delta = localMousePosition - note->dragMouseDownPosition;
+            note->setSize(note->beforeResizingBounds.getWidth() + delta.x, note->beforeResizingBounds.getHeight());
+          } else if (note->resizingLeft && mousePosition.x >= 0) {
+            auto delta = note->dragMouseDownPosition - localMousePosition;
+            note->setBounds(
+              note->beforeResizingBounds.getX() - delta.x,
+              note->beforeResizingBounds.getY(),
+              note->beforeResizingBounds.getWidth() + delta.x,
+              note->beforeResizingBounds.getHeight());
+          }
+        } else {
+          auto bounds = note->getBounds();
+          bounds += localMousePosition - note->dragMouseDownPosition;
+          note->dragging = true;
+          note->setBounds(bounds);
+        }
       }
     }
 
     void mouseUp(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         auto position = e.getEventRelativeTo(parent).getPosition();
-        if (note->dragging) {
+        if (note->resizingRight || note->resizingLeft) {
+          note->resizingRight = false;
+          note->resizingRight = false;
+        } else if (note->dragging) {
           note->setBounds(
             parent->nearestBar(position.x, note->getWidth()),
             parent->nearestLane(position.y),
