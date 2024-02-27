@@ -1,7 +1,7 @@
 #pragma once
 
 #include "JuceHeader.h"
-
+#include "SelectionComponent.h"
 
 struct PianoRollTheme {
   static constexpr unsigned int whiteKeysBg = 0xff2a2d31;
@@ -21,6 +21,15 @@ struct PianoRollTheme {
 
 };
 
+struct NoteModel {
+  int lane{0};
+  int start{0};
+  int end{0};
+  int velocity{0};
+  float scaledWidth{1.0f};
+  float scaledHeight{1.0f};
+};
+
 struct NoteComponent : juce::Component {
 
   bool selected{false};
@@ -33,6 +42,7 @@ struct NoteComponent : juce::Component {
   const juce::Colour cBorderFg{juce::Colours::whitesmoke};
   const float borderWidth{PianoRollTheme::noteBorderWidth};
   juce::Point<int> dragMouseDownPosition{};
+  NoteModel model{};
 
   NoteComponent() : juce::Component() {
   }
@@ -42,6 +52,7 @@ struct NoteComponent : juce::Component {
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
 
+    // body
     if (selected) {
       g.setColour(cSelectedBg);
     } else {
@@ -49,10 +60,37 @@ struct NoteComponent : juce::Component {
     }
     g.fillRect(bounds);
 
+    // border
     juce::Path p;
     p.addRectangle(bounds);
     g.setColour(cBorderFg);
     g.strokePath(p, juce::PathStrokeType(borderWidth));
+
+    // text
+    auto h = static_cast<float>(bounds.getHeight()) * model.scaledHeight;
+    auto f = g.getCurrentFont();
+    auto fh = f.getHeight();
+    if (h >= fh) {
+      auto n = 127 - model.lane;
+      auto at = juce::AffineTransform().scaled(1.0f / model.scaledWidth, 1.0f / model.scaledHeight);
+      auto delta = std::abs(h - fh);
+      auto spacing = delta / 2;
+      if (selected) {
+        g.setColour(cUnselectedBg);
+      } else {
+        g.setColour(cSelectedBg);
+      }
+      g.addTransform(at);
+      g.drawText(
+        juce::MidiMessage::getMidiNoteName(n, true, true, 3),
+        3,
+        static_cast<int>(spacing),
+        bounds.getWidth(),
+        bounds.getHeight(),
+        juce::Justification::topLeft,
+        false);
+    }
+
   }
 
 private:
@@ -72,17 +110,17 @@ struct NoteGridComponent : juce::Component {
   int bars{32};
   int barWidth{64};
   int quantize{0};
-  float scaledWidth{1.0f};
-  float scaledHeight{1.0f};
 
+
+  const juce::MouseCursor rightEdgeResizeCursor{juce::MouseCursor::StandardCursorType::RightEdgeResizeCursor};
+  const juce::MouseCursor leftEdgeResizeCursor{juce::MouseCursor::StandardCursorType::LeftEdgeResizeCursor};
+  const juce::MouseCursor normalCursor{juce::MouseCursor::StandardCursorType::NormalCursor};
   std::vector<NoteComponent *> notes;
+  bool noteMultiSelectionOn{false};
+  GraphViewTheme theme;
+  SelectionComponent selector{theme.cSelectionBackground};
 
   struct ChildrenMouseListener : juce::MouseListener {
-
-    const juce::MouseCursor rightEdgeResizeCursor{juce::MouseCursor::StandardCursorType::RightEdgeResizeCursor};
-    const juce::MouseCursor leftEdgeResizeCursor{juce::MouseCursor::StandardCursorType::LeftEdgeResizeCursor};
-    const juce::MouseCursor normalCursor{juce::MouseCursor::StandardCursorType::NormalCursor};
-
     NoteGridComponent *parent;
 
     explicit ChildrenMouseListener(NoteGridComponent *p) : juce::MouseListener(), parent(p) {}
@@ -91,89 +129,42 @@ struct NoteGridComponent : juce::Component {
 
     void mouseMove(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        auto relative = e.getEventRelativeTo(note);
-        auto localPosition = relative.getPosition();
-        auto delta = std::abs(note->getWidth() - localPosition.x);
-        if (localPosition.x <= 3) {
-          note->setMouseCursor(leftEdgeResizeCursor);
-          note->resizingRight = false;
-          note->resizingLeft = true;
-          note->beforeResizingBounds = note->getBounds();
-        } else if (delta <= 3) {
-          note->setMouseCursor(rightEdgeResizeCursor);
-          note->resizingRight = true;
-          note->resizingLeft = false;
-          note->beforeResizingBounds = note->getBounds();
-        } else {
-          note->setMouseCursor(normalCursor);
-          note->resizingRight = false;
-          note->resizingLeft = false;
-        }
+        parent->noteMouseMove(note, e);
+        parent->updateNoteModel(note);
       }
     }
 
     void mouseExit(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        note->resizingRight = false;
-        note->resizingLeft = false;
-        note->setMouseCursor(normalCursor);
+        parent->noteMouseExit(note, e);
+        parent->updateNoteModel(note);
       }
     }
 
     void mouseDown(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        note->selected = true;
-        note->repaint();
-        note->dragMouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
+        parent->noteMouseDown(note, e);
+        parent->updateNoteModel(note);
       }
     }
 
     void mouseDrag(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        auto mousePosition = e.getEventRelativeTo(parent).getPosition();
-        auto localMousePosition = e.getEventRelativeTo(note).getPosition();
-        if (note->resizingRight || note->resizingLeft) {
-          if (note->resizingRight && mousePosition.x <= parent->getWidth()) {
-            auto delta = localMousePosition - note->dragMouseDownPosition;
-            note->setSize(note->beforeResizingBounds.getWidth() + delta.x, note->beforeResizingBounds.getHeight());
-          } else if (note->resizingLeft && mousePosition.x >= 0) {
-            auto delta = note->dragMouseDownPosition - localMousePosition;
-            note->setBounds(
-              note->beforeResizingBounds.getX() - delta.x,
-              note->beforeResizingBounds.getY(),
-              note->beforeResizingBounds.getWidth() + delta.x,
-              note->beforeResizingBounds.getHeight());
-          }
-        } else {
-          auto bounds = note->getBounds();
-          bounds += localMousePosition - note->dragMouseDownPosition;
-          note->dragging = true;
-          note->setBounds(bounds);
-        }
+        parent->noteMouseDrag(note, e);
       }
     }
 
     void mouseUp(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        auto position = e.getEventRelativeTo(parent).getPosition();
-        if (note->resizingRight || note->resizingLeft) {
-          note->resizingRight = false;
-          note->resizingRight = false;
-        } else if (note->dragging) {
-          note->setBounds(
-            parent->nearestBar(position.x, note->getWidth()),
-            parent->nearestLane(position.y),
-            note->getWidth(),
-            note->getHeight()
-          );
-          note->dragging = false;
-        }
+        parent->noteMouseUp(note, e);
+        parent->updateNoteModel(note);
       }
     }
 
     void mouseDoubleClick(const juce::MouseEvent &e) override {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
-        parent->removeNote(note);
+        parent->noteMouseDoubleClick(note, e);
+        parent->updateNoteModel(note);
       }
     }
 
@@ -281,15 +272,123 @@ struct NoteGridComponent : juce::Component {
   }
 
   void mouseDown(const juce::MouseEvent &e) override {
-    juce::ignoreUnused(e);
     for (auto &n: notes) {
       n->selected = false;
       n->repaint();
     }
+    noteMultiSelectionOn = false;
+    // selector
+    auto position = e.getMouseDownPosition();
+    selector.setBounds(position.x, position.y, 10, 10);
+    addAndMakeVisible(selector);
   }
 
   void mouseDoubleClick(const juce::MouseEvent &e) override {
     addNote(e);
+  }
+
+  void mouseDrag(const juce::MouseEvent &e) override {
+    auto position = e.getMouseDownPosition();
+    auto offset = e.getOffsetFromDragStart();
+    selector.calculateBounds(position, offset);
+    // handle node selection
+    auto numSelectedNotes = 0;
+    for (auto &n: notes) {
+      auto selected = selector.getBounds().intersects(n->getBounds());
+      n->selected = selected;
+      n->repaint();
+      if (selected) ++numSelectedNotes;
+    }
+    noteMultiSelectionOn = numSelectedNotes > 0;
+  }
+
+  void mouseUp(const juce::MouseEvent &) override {
+    removeChildComponent(&selector);
+  }
+
+  void noteMouseMove(NoteComponent *note, const juce::MouseEvent &e) {
+    auto relative = e.getEventRelativeTo(note);
+    auto localPosition = relative.getPosition();
+    auto delta = std::abs(note->getWidth() - localPosition.x);
+    if (localPosition.x <= 3) {
+      note->setMouseCursor(leftEdgeResizeCursor);
+      note->resizingRight = false;
+      note->resizingLeft = true;
+      note->beforeResizingBounds = note->getBounds();
+    } else if (delta <= 3) {
+      note->setMouseCursor(rightEdgeResizeCursor);
+      note->resizingRight = true;
+      note->resizingLeft = false;
+      note->beforeResizingBounds = note->getBounds();
+    } else {
+      note->setMouseCursor(normalCursor);
+      note->resizingRight = false;
+      note->resizingLeft = false;
+    }
+  }
+
+  void noteMouseExit(NoteComponent *note, const juce::MouseEvent &) {
+    note->resizingRight = false;
+    note->resizingLeft = false;
+    note->setMouseCursor(normalCursor);
+  }
+
+  void noteMouseDown(NoteComponent *note, const juce::MouseEvent &e) {
+    if (noteMultiSelectionOn && !note->selected) {
+      noteMultiSelectionOn = false;
+    }
+    note->selected = true;
+    note->repaint();
+    note->dragMouseDownPosition = e.getEventRelativeTo(note).getMouseDownPosition();
+    for (auto &n: notes) {
+      if (n != note && n->selected) {
+        n->selected = false;
+        n->repaint();
+      }
+    }
+  }
+
+  void noteMouseDrag(NoteComponent *note, const juce::MouseEvent &e) {
+    auto mousePosition = e.getEventRelativeTo(this).getPosition();
+    auto localMousePosition = e.getEventRelativeTo(note).getPosition();
+    if (note->resizingRight || note->resizingLeft) {
+      if (note->resizingRight && mousePosition.x <= this->getWidth()) {
+        auto delta = localMousePosition - note->dragMouseDownPosition;
+        note->setSize(note->beforeResizingBounds.getWidth() + delta.x, note->beforeResizingBounds.getHeight());
+      } else if (note->resizingLeft && mousePosition.x >= 0) {
+        auto delta = note->dragMouseDownPosition - localMousePosition;
+        note->setBounds(
+          note->beforeResizingBounds.getX() - delta.x,
+          note->beforeResizingBounds.getY(),
+          note->beforeResizingBounds.getWidth() + delta.x,
+          note->beforeResizingBounds.getHeight());
+      }
+    } else {
+      auto bounds = note->getBounds();
+      bounds += localMousePosition - note->dragMouseDownPosition;
+      note->dragging = true;
+      note->setBounds(bounds);
+    }
+  }
+
+  void noteMouseUp(NoteComponent *note, const juce::MouseEvent &e) {
+    auto position = e.getEventRelativeTo(this).getPosition();
+    if (note->resizingRight || note->resizingLeft) {
+      note->resizingRight = false;
+      note->resizingRight = false;
+    } else if (note->dragging) {
+      note->setBounds(
+        nearestBar(position.x, note->getWidth()),
+        nearestLane(position.y),
+        note->getWidth(),
+        note->getHeight()
+      );
+      note->dragging = false;
+    }
+  }
+
+  void noteMouseDoubleClick(NoteComponent *note, const juce::MouseEvent &) {
+    removeNote(note);
   }
 
   [[nodiscard]] int nearestLane(int y) const {
@@ -316,6 +415,7 @@ struct NoteGridComponent : juce::Component {
     auto n = new NoteComponent();
     n->addMouseListener(mouseListener.get(), false);
     n->setBounds(nearestBar(position.x, barWidth), nearestLane(position.y), barWidth, laneHeight);
+    updateNoteModel(n);
     notes.push_back(n);
     addAndMakeVisible(n);
   }
@@ -329,7 +429,26 @@ struct NoteGridComponent : juce::Component {
     }
   }
 
+  void updateNoteModel(NoteComponent *note) const {
+    note->model.start = note->getX();
+    note->model.end = note->getWidth();
+    note->model.lane = note->getY() / laneHeight;
+    note->model.scaledWidth = scaledWidth;
+    note->model.scaledHeight = scaledHeight;
+  }
+
+  void setScale(float widthFactor, float heightFactor) {
+    scaledWidth = widthFactor;
+    scaledHeight = heightFactor;
+    for (auto &n: notes) {
+      n->model.scaledWidth = scaledWidth;
+      n->model.scaledHeight = scaledHeight;
+      n->repaint();
+    }
+  }
 
 private:
+  float scaledWidth{1.0f};
+  float scaledHeight{1.0f};
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoteGridComponent)
 };

@@ -83,8 +83,7 @@ struct PianoRollProcessor : public NodeProcessor {
       auto onScaleChange = [this]() {
         auto xp = static_cast<float>(sliderNoteGridBarWidth.getValue());
         auto yp = static_cast<float>(sliderNoteGridLaneHeight.getValue());
-        noteGridComponent.scaledWidth = xp;
-        noteGridComponent.scaledHeight = yp;
+        noteGridComponent.setScale(xp, yp);
         noteGridComponent.setTransform(juce::AffineTransform().scaled(xp, yp));
       };
 
