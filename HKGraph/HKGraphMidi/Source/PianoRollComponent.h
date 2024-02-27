@@ -104,7 +104,7 @@ struct NoteGridComponent : juce::Component {
         auto position = e.getEventRelativeTo(parent).getPosition();
         if (note->dragging) {
           note->setBounds(
-            parent->nearestBar(position.x),
+            parent->nearestBar(position.x, note->getWidth()),
             parent->nearestLane(position.y),
             note->getWidth(),
             note->getHeight()
@@ -243,13 +243,13 @@ struct NoteGridComponent : juce::Component {
     return yp;
   }
 
-  [[nodiscard]] int nearestBar(int x) const {
+  [[nodiscard]] int nearestBar(int x, int width) const {
     auto divisor = barWidth;
     if (quantize > 1) divisor = barWidth / quantize;
     auto possibleBarNumber = x / divisor;
     auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;
-    else if (xp > getWidth() - barWidth) xp = getWidth() - barWidth;
+    else if (xp > getWidth() - width) xp = getWidth() - width;
     return xp;
   }
 
@@ -258,7 +258,7 @@ struct NoteGridComponent : juce::Component {
     auto position = relativeEvent.getPosition();
     auto n = new NoteComponent();
     n->addMouseListener(mouseListener.get(), false);
-    n->setBounds(nearestBar(position.x), nearestLane(position.y), barWidth, laneHeight);
+    n->setBounds(nearestBar(position.x, barWidth), nearestLane(position.y), barWidth, laneHeight);
     notes.push_back(n);
     addAndMakeVisible(n);
   }
