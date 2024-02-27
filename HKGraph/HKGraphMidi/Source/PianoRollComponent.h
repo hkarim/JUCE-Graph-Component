@@ -372,14 +372,19 @@ struct NoteGridComponent : juce::Component {
   }
 
   void noteMouseUp(NoteComponent *note, const juce::MouseEvent &e) {
-    auto position = e.getEventRelativeTo(this).getPosition();
     if (note->resizingRight || note->resizingLeft) {
       note->resizingRight = false;
       note->resizingRight = false;
     } else if (note->dragging) {
+      auto mousePosition = e.getEventRelativeTo(this).getPosition();
+      auto notePosition = note->getPosition();
+      auto x = nearestBar(notePosition.x, note->getWidth());
+      if (e.mods.isShiftDown()) {
+        x = notePosition.x;
+      }
       note->setBounds(
-        nearestBar(position.x, note->getWidth()),
-        nearestLane(position.y),
+        x,
+        nearestLane(mousePosition.y),
         note->getWidth(),
         note->getHeight()
       );
