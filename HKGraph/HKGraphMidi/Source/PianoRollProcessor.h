@@ -9,7 +9,7 @@
 struct PianoRollProcessor : public NodeProcessor {
 
   static constexpr int MIN_WIDTH = 600;
-  static constexpr int MIN_HEIGHT = 400;
+  static constexpr int MIN_HEIGHT = 300;
 
   explicit PianoRollProcessor(Graph *graph) :
     NodeProcessor(graph) {
@@ -113,7 +113,7 @@ struct PianoRollProcessor : public NodeProcessor {
     }
 
     void resized() override {
-      auto bounds = getLocalBounds().reduced(10, 10);
+      auto bounds = getLocalBounds();//.reduced(10, 10);
 
       juce::FlexBox fb;
       fb.flexDirection = juce::FlexBox::Direction::column;
@@ -132,7 +132,7 @@ struct PianoRollProcessor : public NodeProcessor {
       fb.items.add(
         juce::FlexItem(pianoRollViewPort)
           .withMinHeight(200.0f)
-          .withFlex(0.8f)
+          .withFlex(1.0f)
           .withMargin(margin));
 
       juce::FlexBox controls;
@@ -169,7 +169,7 @@ struct PianoRollProcessor : public NodeProcessor {
 
       fb.items.add(
         juce::FlexItem(controls)
-          .withFlex(0.2f));
+          .withMinHeight(10.0f));
 
       fb.performLayout(bounds);
     }
