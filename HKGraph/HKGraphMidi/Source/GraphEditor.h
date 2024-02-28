@@ -15,7 +15,7 @@
 #include "NoteFilterProcessor.h"
 #include "ChordSplitterProcessor.h"
 #include "GraphLookAndFeel.h"
-#include "PianoRollProcessor.h"
+#include "pr/PianoRollProcessor.h"
 
 struct SliderBinding : public juce::Slider::Listener {
   juce::Slider &m_slider;

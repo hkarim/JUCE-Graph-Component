@@ -11,7 +11,7 @@
 #include "TransposeProcessor.h"
 #include "CurveProcessor.h"
 #include "ChordSplitterProcessor.h"
-#include "PianoRollProcessor.h"
+#include "pr/PianoRollProcessor.h"
 
 struct ProcessorRegistry {
 

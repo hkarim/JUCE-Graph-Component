@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Processors.h"
+#include "../Processors.h"
 #include "NodeProcessor.h"
-#include "RangeParameter.h"
+#include "../RangeParameter.h"
 #include "ConstrainedComponent.h"
 #include "PianoRollComponent.h"
 

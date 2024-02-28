@@ -40,7 +40,7 @@ target_sources(HKGraphMidi
         Source/TransposeProcessor.cpp
         Source/ChannelRouterProcessor.cpp
         Source/CurveProcessor.cpp
-        Source/PianoRollProcessor.cpp
+        Source/pr/PianoRollProcessor.cpp
         Source/PluginEditor.cpp
         Source/PluginProcessor.cpp)
 
