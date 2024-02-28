@@ -18,6 +18,7 @@ struct NoteGridComponent : juce::Component {
   int bars{32};
   int barWidth{64};
   int quantize{1};
+  bool freeResize{false};
 
 
   const juce::MouseCursor rightEdgeResizeCursor{juce::MouseCursor::StandardCursorType::RightEdgeResizeCursor};
@@ -94,10 +95,10 @@ struct NoteGridComponent : juce::Component {
 
     void checkBounds(juce::Rectangle<int> &bounds,
                      const juce::Rectangle<int> &previousBounds,
-                     const juce::Rectangle<int> &limits,
-                     bool isStretchingTop,
+                     const juce::Rectangle<int> &,
+                     bool,
                      bool isStretchingLeft,
-                     bool isStretchingBottom,
+                     bool,
                      bool isStretchingRight) override {
       auto xp = previousBounds.getX();
       auto yp = previousBounds.getY();
@@ -105,9 +106,7 @@ struct NoteGridComponent : juce::Component {
       auto hp = previousBounds.getHeight();
 
       auto x = bounds.getX();
-      auto y = bounds.getY();
       auto w = bounds.getWidth();
-      auto h = bounds.getHeight();
 
       // boundaries
       if (x < 0) {
@@ -121,33 +120,38 @@ struct NoteGridComponent : juce::Component {
         return;
       }
 
-      // snap
-      auto min = parent->barWidth / parent->quantize;
-      if (isStretchingLeft) {
-        auto xs = parent->nearestBar(x, w);
-        auto xr = x + w;
-        //std::cout << "xs=" << xs << ", xr=" << xr << ", diff=" << xr - xs << ", min=" << min << std::endl;
-        if (xr > xs) {
-          bounds.setLeft(xs);
-        }
-        else {
-          std::cout << "dah" << std::endl;
+      if (parent->freeResize) {
+        if (w < 16) {
           bounds.setBounds(xp, yp, wp, hp);
         }
       }
-      else if (isStretchingRight) {
-        auto xr = x + w;
-        auto xs = parent->nearestBar(xr, 0);
-        //std::cout << "xs=" << xs << ", xr=" << xr << ", diff=" << xs - x << ", min=" << min << std::endl;
-        w = xs - x;
-        if (w >= min) {
-          bounds.setBounds(x, yp, w, hp);
+      else {
+        // snap
+        auto min = parent->barWidth / parent->quantize;
+        if (isStretchingLeft) {
+          auto xs = parent->nearestBar(x, w);
+          auto xr = x + w;
+          if (xr > xs) {
+            bounds.setLeft(xs);
+          }
+          else {
+            bounds.setBounds(x, yp, wp, hp);
+          }
         }
-        else {
-          //std::cout << "dah" << std::endl;
-          bounds.setBounds(xp, yp, wp, hp);
+        else if (isStretchingRight) {
+          auto xr = x + w;
+          auto xs = parent->nearestBar(xr, 0);
+          w = xs - x;
+          //w >= min
+          if (w >= 16) {
+            bounds.setBounds(x, yp, w, hp);
+          }
+          else {
+            bounds.setBounds(xp, yp, wp, hp);
+          }
         }
       }
+
     }
   };
 
@@ -165,7 +169,6 @@ struct NoteGridComponent : juce::Component {
       delete n;
     }
   }
-
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
@@ -336,7 +339,7 @@ struct NoteGridComponent : juce::Component {
     removeNote(note);
   }
 
-  void startNoteDrag(NoteComponent *note, const juce::MouseEvent &e) {
+  void startNoteDrag(NoteComponent *note, const juce::MouseEvent &e) const {
     auto localMousePosition = e.getEventRelativeTo(note).getPosition();
     auto bounds = note->getBounds();
     bounds += localMousePosition - note->dragMouseDownPosition;
@@ -387,6 +390,9 @@ struct NoteGridComponent : juce::Component {
     n->addMouseListener(mouseListener.get(), false);
     n->setBounds(nearestBar(position.x, barWidth), nearestLane(position.y), barWidth, laneHeight);
     updateNoteModel(n);
+    n->callback = [this](NoteComponent *, bool freeResizeOn) {
+      this->freeResize = freeResizeOn;
+    };
     notes.push_back(n);
     addAndMakeVisible(n);
   }

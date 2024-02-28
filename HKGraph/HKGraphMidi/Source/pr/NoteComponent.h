@@ -12,8 +12,9 @@ struct NoteComponent : juce::Component {
   const float borderWidth{PianoRollTheme::noteBorderWidth};
   juce::Point<int> dragMouseDownPosition{};
   NoteModel model{};
+  std::function<void(NoteComponent*, bool)> callback;
 
-  NoteComponent(juce::ComponentBoundsConstrainer *constrainer) :
+  explicit NoteComponent(juce::ComponentBoundsConstrainer *constrainer) :
     juce::Component(),
     rightResizable(this, constrainer, juce::ResizableEdgeComponent::Edge::rightEdge),
     leftResizable(this, constrainer, juce::ResizableEdgeComponent::Edge::leftEdge) {
@@ -73,16 +74,29 @@ struct NoteComponent : juce::Component {
 
   struct ResizableNote : juce::ResizableEdgeComponent {
     NoteComponent *note;
-    const juce::ResizableEdgeComponent::Edge edge;
 
     ResizableNote(NoteComponent *componentToResize,
                   juce::ComponentBoundsConstrainer *constrainer,
                   juce::ResizableEdgeComponent::Edge edgeToResize) :
       juce::ResizableEdgeComponent(componentToResize, constrainer, edgeToResize) ,
-      note(componentToResize), edge(edgeToResize) {
+      note(componentToResize) {
     }
 
     ~ResizableNote() override = default;
+
+    void mouseDown(const juce::MouseEvent &e) override {
+      if (note->callback != nullptr) {
+        note->callback(note, e.mods.isShiftDown());
+      }
+      juce::ResizableEdgeComponent::mouseDown(e);
+    }
+
+    void mouseUp(const juce::MouseEvent &e) override {
+      if (note->callback != nullptr) {
+        note->callback(note, false);
+      }
+      juce::ResizableEdgeComponent::mouseUp(e);
+    }
 
   };
 
