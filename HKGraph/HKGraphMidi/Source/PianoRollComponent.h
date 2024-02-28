@@ -51,6 +51,7 @@ struct NoteComponent : juce::Component {
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds();
+    bounds = bounds.reduced(1);
 
     // body
     if (selected) {
@@ -60,34 +61,31 @@ struct NoteComponent : juce::Component {
     }
     g.fillRect(bounds);
 
-    // border
-    juce::Path p;
-    p.addRectangle(bounds);
-    g.setColour(cBorderFg);
-    g.strokePath(p, juce::PathStrokeType(borderWidth));
-
     // text
     auto h = static_cast<float>(bounds.getHeight()) * model.scaledHeight;
-    auto f = g.getCurrentFont();
-    auto fh = f.getHeight();
+    auto fh = g.getCurrentFont().getHeight();
     if (h >= fh) {
       auto n = 127 - model.lane;
       auto at = juce::AffineTransform().scaled(1.0f / model.scaledWidth, 1.0f / model.scaledHeight);
       auto delta = std::abs(h - fh);
       auto spacing = delta / 2;
-      if (selected) {
+      if (selected) { // font colour is the reverse of the background colour
         g.setColour(cUnselectedBg);
       } else {
         g.setColour(cSelectedBg);
       }
-      g.addTransform(at);
+      g.addTransform(at); // prevent font transformation
+
+      auto textArea = juce::Rectangle<float>(
+        4.0f * model.scaledWidth,
+        spacing,
+        static_cast<float>(bounds.getWidth()) * model.scaledWidth,
+        static_cast<float>(bounds.getHeight()) * model.scaledHeight
+      );
       g.drawText(
         juce::MidiMessage::getMidiNoteName(n, true, true, 3),
-        3,
-        static_cast<int>(spacing),
-        bounds.getWidth(),
-        bounds.getHeight(),
-        juce::Justification::topLeft,
+        textArea,
+        juce::Justification::centredLeft,
         false);
     }
 
@@ -158,7 +156,7 @@ struct NoteGridComponent : juce::Component {
       if (auto note = dynamic_cast<NoteComponent *>(e.originalComponent)) {
         parent->noteMouseUp(note, e);
         if (parent->noteMultiSelectionOn) {
-          for (auto &n : parent->notes) {
+          for (auto &n: parent->notes) {
             parent->updateNoteModel(n);
             n->repaint();
           }
@@ -350,8 +348,7 @@ struct NoteGridComponent : juce::Component {
       for (auto &n: notes) {
         n->dragMouseDownPosition = e.getEventRelativeTo(n).getMouseDownPosition();
       }
-    }
-    else {
+    } else {
       note->selected = true;
       note->repaint();
       for (auto &n: notes) {
@@ -366,27 +363,26 @@ struct NoteGridComponent : juce::Component {
 
   void noteMouseDrag(NoteComponent *note, const juce::MouseEvent &e) {
     if (noteMultiSelectionOn) {
-      for (auto &n : notes) {
+      for (auto &n: notes) {
         if (n->selected) startNoteDrag(n, e);
       }
-    }
-    else {
-      startNoteDrag(note, e) ;
+    } else {
+      startNoteDrag(note, e);
     }
   }
 
   void noteMouseUp(NoteComponent *note, const juce::MouseEvent &e) {
     if (note->resizingRight || note->resizingLeft) {
       note->resizingRight = false;
-      note->resizingRight = false;
+      note->resizingLeft = false;
     } else if (note->dragging) {
-       if (noteMultiSelectionOn) {
-         for (auto &n: notes) {
-           if (n->selected) endNoteDrag(n, e);
-         }
-       } else {
-         endNoteDrag(note, e);
-       }
+      if (noteMultiSelectionOn) {
+        for (auto &n: notes) {
+          if (n->selected) endNoteDrag(n, e);
+        }
+      } else {
+        endNoteDrag(note, e);
+      }
     }
   }
 
@@ -394,7 +390,7 @@ struct NoteGridComponent : juce::Component {
     removeNote(note);
   }
 
-  void startNoteDrag(NoteComponent * note, const juce::MouseEvent &e) {
+  void startNoteDrag(NoteComponent *note, const juce::MouseEvent &e) {
     auto localMousePosition = e.getEventRelativeTo(note).getPosition();
     if ((note->resizingRight || note->resizingLeft) && !noteMultiSelectionOn) { // handle resizing first
       resizeNote(note, e);
