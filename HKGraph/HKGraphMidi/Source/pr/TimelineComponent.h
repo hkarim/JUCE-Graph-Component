@@ -44,7 +44,7 @@ struct TimelineComponent : public juce::Component {
     }
     g.setColour(juce::Colours::black);
     // line below
-    g.fillRect(0, bounds.getHeight() - 2, bounds.getWidth(), 2);
+    g.fillRect(0, bounds.getHeight() - 3, bounds.getWidth(), 3);
   }
 
   void setScale(float widthFactor, float heightFactor) {

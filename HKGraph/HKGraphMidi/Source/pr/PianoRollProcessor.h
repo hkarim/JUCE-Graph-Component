@@ -54,7 +54,6 @@ struct PianoRollProcessor : public NodeProcessor {
   struct Panel : public ConstrainedComponent {
     PianoRollProcessor *processor;
     GraphViewTheme theme;
-    juce::Viewport pianoRollViewPort;
     PianoRollComponent pianoRoll;
     juce::Slider sliderNoteGridLaneHeight;
     juce::Slider sliderNoteGridBarWidth;
@@ -69,12 +68,11 @@ struct PianoRollProcessor : public NodeProcessor {
         sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
       m_constrains.setMinimumSize(200, 200);
 
-      pianoRoll.setSize(
-        pianoRoll.getBars() * pianoRoll.getBarWidth(),
-        127 * pianoRoll.getLaneHeight());
+//      pianoRoll.setSize(
+//        pianoRoll.getBars() * pianoRoll.getBarWidth(),
+//        127 * pianoRoll.getLaneHeight());
 
-      pianoRollViewPort.setViewedComponent(&pianoRoll, false);
-      addAndMakeVisible(pianoRollViewPort);
+      addAndMakeVisible(pianoRoll);
 
       sliderNoteGridLaneHeight.setRange(1.0f, 4.0f, 0.1f);
       sliderNoteGridLaneHeight.setValue(1.0f);
@@ -84,10 +82,7 @@ struct PianoRollProcessor : public NodeProcessor {
         auto xp = static_cast<float>(sliderNoteGridBarWidth.getValue());
         auto yp = static_cast<float>(sliderNoteGridLaneHeight.getValue());
         pianoRoll.setScale(xp, yp);
-        pianoRoll.noteGrid.setTransform(juce::AffineTransform().scaled(xp, yp));
-        auto tlh = static_cast<float>(pianoRoll.timeline.getHeight()) / yp;
-        pianoRoll.noteGrid.setTopLeftPosition(0, static_cast<int>(tlh));
-        pianoRoll.timeline.setTransform(juce::AffineTransform().scaled(xp, 1.0f));
+
       };
 
       sliderNoteGridLaneHeight.setTextBoxIsEditable(false);
@@ -134,7 +129,7 @@ struct PianoRollProcessor : public NodeProcessor {
       );
 
       fb.items.add(
-        juce::FlexItem(pianoRollViewPort)
+        juce::FlexItem(pianoRoll)
           .withMinHeight(200.0f)
           .withFlex(1.0f)
           .withMargin(margin));
@@ -173,7 +168,8 @@ struct PianoRollProcessor : public NodeProcessor {
 
       fb.items.add(
         juce::FlexItem(controls)
-          .withMinHeight(10.0f));
+          .withMinHeight(10.0f)
+          .withMargin(margin));
 
       fb.performLayout(bounds);
     }
