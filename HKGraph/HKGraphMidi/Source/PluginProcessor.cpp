@@ -114,7 +114,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages) {
   std::lock_guard<std::mutex> lock(graph->m_mutex);
-
+  // https://forum.juce.com/t/processblock-sampleposition-gettimestamp-interpretation/56172/3
   if (m_dirty) {
     juce::MidiBuffer output;
     for (auto i = 1; i <= 16; i++) {

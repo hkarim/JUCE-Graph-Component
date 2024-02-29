@@ -9,7 +9,7 @@
 struct PianoRollProcessor : public NodeProcessor {
 
   static constexpr int MIN_WIDTH = 600;
-  static constexpr int MIN_HEIGHT = 300;
+  static constexpr int MIN_HEIGHT = 600;
 
   explicit PianoRollProcessor(Graph *graph) :
     NodeProcessor(graph) {
@@ -55,7 +55,7 @@ struct PianoRollProcessor : public NodeProcessor {
     PianoRollProcessor *processor;
     GraphViewTheme theme;
     juce::Viewport pianoRollViewPort;
-    NoteGridComponent noteGridComponent;
+    PianoRollComponent pianoRoll;
     juce::Slider sliderNoteGridLaneHeight;
     juce::Slider sliderNoteGridBarWidth;
     juce::Slider sliderNoteGridQuantize;
@@ -69,22 +69,25 @@ struct PianoRollProcessor : public NodeProcessor {
         sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
       m_constrains.setMinimumSize(200, 200);
 
-      noteGridComponent.setSize(
-        noteGridComponent.bars * noteGridComponent.barWidth,
-        127 * noteGridComponent.laneHeight);
+      pianoRoll.setSize(
+        pianoRoll.getBars() * pianoRoll.getBarWidth(),
+        127 * pianoRoll.getLaneHeight());
 
-      pianoRollViewPort.setViewedComponent(&noteGridComponent, false);
+      pianoRollViewPort.setViewedComponent(&pianoRoll, false);
       addAndMakeVisible(pianoRollViewPort);
 
-      sliderNoteGridLaneHeight.setRange(0.5f, 4.0f, 0.1f);
+      sliderNoteGridLaneHeight.setRange(1.0f, 4.0f, 0.1f);
       sliderNoteGridLaneHeight.setValue(1.0f);
-      sliderNoteGridBarWidth.setRange(0.5f, 4.0f, 0.1f);
+      sliderNoteGridBarWidth.setRange(1.0f, 4.0f, 0.1f);
       sliderNoteGridBarWidth.setValue(1.0f);
       auto onScaleChange = [this]() {
         auto xp = static_cast<float>(sliderNoteGridBarWidth.getValue());
         auto yp = static_cast<float>(sliderNoteGridLaneHeight.getValue());
-        noteGridComponent.setScale(xp, yp);
-        noteGridComponent.setTransform(juce::AffineTransform().scaled(xp, yp));
+        pianoRoll.setScale(xp, yp);
+        pianoRoll.noteGrid.setTransform(juce::AffineTransform().scaled(xp, yp));
+        auto tlh = static_cast<float>(pianoRoll.timeline.getHeight()) / yp;
+        pianoRoll.noteGrid.setTopLeftPosition(0, static_cast<int>(tlh));
+        pianoRoll.timeline.setTransform(juce::AffineTransform().scaled(xp, 1.0f));
       };
 
       sliderNoteGridLaneHeight.setTextBoxIsEditable(false);
@@ -95,13 +98,14 @@ struct PianoRollProcessor : public NodeProcessor {
       addAndMakeVisible(sliderNoteGridLaneHeight);
       addAndMakeVisible(sliderNoteGridBarWidth);
 
-      sliderNoteGridQuantize.setRange(noteGridComponent.quantize, 6, 1);
+      sliderNoteGridQuantize.setRange(pianoRoll.getQuantize(), 6, 1);
       sliderNoteGridQuantize.setTextBoxIsEditable(false);
       sliderNoteGridQuantize.onValueChange = [this]() {
-        noteGridComponent.quantize =
+        pianoRoll.setQuantize(
           static_cast<int>(
-            std::pow(2, static_cast<int>(std::ceil(sliderNoteGridQuantize.getValue()))));
-        noteGridComponent.repaint();
+            std::pow(2, static_cast<int>(std::ceil(sliderNoteGridQuantize.getValue()))))
+        );
+        pianoRoll.repaint();
       };
       addAndMakeVisible(sliderNoteGridQuantize);
     }
@@ -126,7 +130,7 @@ struct PianoRollProcessor : public NodeProcessor {
         0.0f, // top
         0.0f, // right
         5.0f, // bottom
-        0.0f  // left
+        1.0f  // left
       );
 
       fb.items.add(
