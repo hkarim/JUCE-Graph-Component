@@ -32,24 +32,23 @@ struct PianoRollComponent : juce::Component {
 
   void resized() override {
     auto originalBounds = getLocalBounds();
-    auto timelineHeight = getLocalPoint(this, juce::Point<int>(0, 32)).y;
-    auto origin = getLocalPoint(this, juce::Point<int>());
+    auto timelineHeight = 32;
     auto w = bars * barWidth;
-    auto vScrollbarWidth = 8; // to compensate for the visible scrollbar in the grid, since the timeline scrollbars are not visible
-    timeline.setSize(w - vScrollbarWidth, 32);
+    // to compensate for the visible scrollbar in the grid, since the timeline scrollbars are not visible
+    auto vScrollbarWidth = juce::LookAndFeel::getDefaultLookAndFeel().getDefaultScrollbarWidth();
+    timeline.setSize(w + vScrollbarWidth, timelineHeight);
     timelineViewPort.setBounds(
-      origin.x,
-      origin.y,
+      0,
+      0,
       originalBounds.getWidth(),
-      static_cast<int>(timelineHeight)
+      timelineHeight
     );
     noteGrid.setSize(w, 127 * laneHeight);
-    noteGridViewPort.getHorizontalScrollBar().getHeight();
     noteGridViewPort.setBounds(
-      origin.x,
+      0,
       timelineHeight,
       originalBounds.getWidth(),
-      originalBounds.getHeight() - 30 // compensate for the scrollbar height
+      originalBounds.getHeight() - timelineHeight // compensate for the scrollbar height
     );
   }
 

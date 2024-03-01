@@ -18,33 +18,28 @@ struct TimelineComponent : public juce::Component {
     g.fillRect(bounds);
 
     // draw bar lines
-    auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
+    auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth * 0.5f;
     auto i = 0;
-    auto x = 0;
-    auto y = 0;
     g.setColour(juce::Colours::white);
     while (i <= bars) {
-      x = i * barWidth;
-      g.fillRect(
-        static_cast<float>(x),
-        static_cast<float>(y),
-        vBarSeparatorWidth,
-        static_cast<float>(bounds.getHeight()));
-      ++i;
+      auto x = i * barWidth;
       // draw quantize bar lines
       auto sub = barWidth / timeSignature.numerator;
-      for (auto j = 1; j < barWidth; j += sub) {
-        x += sub;
+      for (auto j = 0; j < barWidth; j += sub) {
+        auto alt = x % barWidth;
+        auto delta = alt > 1 ? 20.0f : 10.0f;
+        if (alt > 1) {
+          delta = 20.0f;
+        }
         g.fillRect(
           static_cast<float>(x),
-          static_cast<float>(y),
+          delta,
           vBarSeparatorWidth,
           static_cast<float>(bounds.getHeight()));
+        x += sub;
       }
+      ++i;
     }
-    g.setColour(juce::Colours::black);
-    // line below
-    g.fillRect(0, bounds.getHeight() - 3, bounds.getWidth(), 3);
   }
 
   void setScale(float widthFactor, float heightFactor) {
