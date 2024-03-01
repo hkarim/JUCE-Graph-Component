@@ -214,7 +214,8 @@ struct NoteGridComponent : juce::Component {
         g.setColour(c);
         g.fillRect(
           static_cast<float>(x),
-          static_cast<float>(y - PianoRollTheme::hLaneSeparatorHeight),
+          //static_cast<float>(y - PianoRollTheme::hLaneSeparatorHeight),
+          static_cast<float>(static_cast<float>(y) - hLaneSeparatorHeight),
           static_cast<float>(w),
           hLaneSeparatorHeight);
 
