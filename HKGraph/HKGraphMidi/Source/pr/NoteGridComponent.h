@@ -128,7 +128,6 @@ struct NoteGridComponent : juce::Component {
       }
       else {
         // snap
-        //auto min = parent->barWidth / parent->quantize;
         if (isStretchingLeft) {
           auto xs = parent->nearestBar(x, w);
           auto xr = x + w;
@@ -136,15 +135,16 @@ struct NoteGridComponent : juce::Component {
             bounds.setLeft(xs);
           }
           else {
-            bounds.setBounds(x, yp, wp, hp);
+            //bounds.setBounds(x, yp, wp, hp);
+            bounds.setBounds(xp, yp, wp, hp);
           }
         }
         else if (isStretchingRight) {
           auto xr = x + w;
           auto xs = parent->nearestBar(xr, 0);
           w = xs - x;
-          //w >= min
-          if (w >= 16) {
+          auto min = parent->barWidth / parent->quantize;
+          if (w >= min) {
             bounds.setBounds(x, yp, w, hp);
           }
           else {
