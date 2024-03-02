@@ -16,6 +16,7 @@ struct NoteGridComponent : juce::Component {
   const juce::Colour cSubBarFg{PianoRollTheme::vSubBarFg};
 
   int laneHeight{8};
+  int nKeys{128};
   int bars{32};
   int barWidth{64};
   int quantize{1};
@@ -125,29 +126,25 @@ struct NoteGridComponent : juce::Component {
         if (w < 16) {
           bounds.setBounds(xp, yp, wp, hp);
         }
-      }
-      else {
+      } else {
         // snap
         if (isStretchingLeft) {
           auto xs = parent->nearestBar(x, w);
           auto xr = x + w;
           if (xr > xs) {
             bounds.setLeft(xs);
-          }
-          else {
+          } else {
             //bounds.setBounds(x, yp, wp, hp);
             bounds.setBounds(xp, yp, wp, hp);
           }
-        }
-        else if (isStretchingRight) {
+        } else if (isStretchingRight) {
           auto xr = x + w;
           auto xs = parent->nearestBar(xr, 0);
           w = xs - x;
           auto min = parent->barWidth / parent->quantize;
           if (w >= min) {
             bounds.setBounds(x, yp, w, hp);
-          }
-          else {
+          } else {
             bounds.setBounds(xp, yp, wp, hp);
           }
         }
@@ -158,10 +155,15 @@ struct NoteGridComponent : juce::Component {
 
   std::unique_ptr<NoteConstrainer> noteConstrainer;
 
-  NoteGridComponent() :
+  NoteGridComponent(int gridLaneHeight, int numberOfKeys, int numberOfBars, int gridBarWidth) :
     juce::Component(),
+    laneHeight(gridLaneHeight),
+    nKeys(numberOfKeys),
+    bars(numberOfBars),
+    barWidth(gridBarWidth),
     mouseListener(new ChildrenMouseListener(this)),
     noteConstrainer(new NoteConstrainer(this)) {
+    setSize(bars * barWidth, numberOfKeys * laneHeight);
   }
 
   ~NoteGridComponent() override {
@@ -188,8 +190,9 @@ struct NoteGridComponent : juce::Component {
     int y;
     auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
     auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
-    while (i <= 127) {
-      auto n = 127 - i; // the note number
+    auto zeroBasedKeys = nKeys - 1;
+    while (i <= zeroBasedKeys) {
+      auto n = zeroBasedKeys - i; // the note number
       auto r = n % 12;
       auto white = r == 0 || r == 2 || r == 4 || r == 5 || r == 7 || r == 9 || r == 11;
 

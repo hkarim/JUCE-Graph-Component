@@ -7,18 +7,29 @@
 #include "NoteComponent.h"
 #include "NoteGridComponent.h"
 #include "TimelineComponent.h"
+#include "KeysComponent.h"
 
 struct PianoRollComponent : juce::Component {
 
   TimelineComponent timeline;
-  NoteGridComponent noteGrid;
   SyncViewport timelineViewPort;
+  NoteGridComponent noteGrid;
   SyncViewport noteGridViewPort;
+  KeysComponent keyboard;
+  SyncViewport keyboardViewPort;
 
-  PianoRollComponent() : juce::Component() {
-    addAndMakeVisible(timeline);
+  PianoRollComponent() :
+    juce::Component(),
+    noteGrid(7, 128, 32, 64),
+    keyboard(7, 128) {
+    //addAndMakeVisible(timeline);
+    keyboardViewPort.setViewedComponent(&keyboard, false);
+    keyboardViewPort.setScrollBarsShown(false, false, false, false);
+    addAndMakeVisible(keyboardViewPort);
+
     noteGridViewPort.setViewedComponent(&noteGrid, false);
     addAndMakeVisible(noteGridViewPort);
+
     timelineViewPort.setViewedComponent(&timeline, false);
     timelineViewPort.setScrollBarsShown(false, false, false, false);
     addAndMakeVisible(timelineViewPort);
@@ -30,25 +41,42 @@ struct PianoRollComponent : juce::Component {
 
   ~PianoRollComponent() override = default;
 
+  void paint(juce::Graphics &g) override {
+    g.setColour(juce::Colour(0xff343d48));
+    g.fillRect(getLocalBounds());
+  }
+
   void resized() override {
-    auto originalBounds = getLocalBounds();
+    auto bounds = getLocalBounds();
+    auto scrollbarWidth = juce::LookAndFeel::getDefaultLookAndFeel().getDefaultScrollbarWidth();
     auto timelineHeight = 32;
-    auto w = bars * barWidth;
-    // to compensate for the visible scrollbar in the grid, since the timeline scrollbars are not visible
-    auto vScrollbarWidth = juce::LookAndFeel::getDefaultLookAndFeel().getDefaultScrollbarWidth();
-    timeline.setSize(w + vScrollbarWidth, timelineHeight);
-    timelineViewPort.setBounds(
-      0,
-      0,
-      originalBounds.getWidth(),
-      timelineHeight
-    );
-    noteGrid.setSize(w, 127 * laneHeight);
-    noteGridViewPort.setBounds(
+    auto keyboardWidth = 48;
+
+    // keyboard
+    keyboard.setSize(keyboardWidth, noteGrid.getHeight() + scrollbarWidth);
+    keyboardViewPort.setBounds(
       0,
       timelineHeight,
-      originalBounds.getWidth(),
-      originalBounds.getHeight() - timelineHeight // compensate for the scrollbar height
+      keyboard.getWidth(),
+      bounds.getHeight() - timelineHeight // compensate for the timeline height
+    );
+
+    // timeline
+    // to compensate for the visible scrollbar in the grid, since the timeline scrollbars are not visible
+    timeline.setSize(noteGrid.getWidth() + scrollbarWidth, timelineHeight);
+    timelineViewPort.setBounds(
+      keyboardWidth,
+      0,
+      bounds.getWidth() - keyboardWidth,
+      timelineHeight
+    );
+
+    // note grid
+    noteGridViewPort.setBounds(
+      keyboardWidth,
+      timelineHeight,
+      bounds.getWidth() - keyboardWidth,
+      bounds.getHeight() - timelineHeight // compensate for the timeline height
     );
   }
 
@@ -56,16 +84,24 @@ struct PianoRollComponent : juce::Component {
     scaledWidth = widthFactor;
     scaledHeight = heightFactor;
     noteGrid.setTransform(juce::AffineTransform().scaled(scaledWidth, scaledHeight));
-    auto tlh = static_cast<float>(timeline.getHeight()) / scaledHeight;
-    noteGrid.setTopLeftPosition(0, static_cast<int>(tlh));
+
+    auto timelineHeight = static_cast<float>(timeline.getHeight()) / scaledHeight;
+    auto keyboardWidth = static_cast<float>(keyboard.getWidth()) / scaledWidth;
+    noteGrid.setTopLeftPosition(static_cast<int>(keyboardWidth), static_cast<int>(timelineHeight));
+
     timeline.setTransform(juce::AffineTransform().scaled(scaledWidth, 1.0f));
+    keyboard.setTransform(juce::AffineTransform().scaled(1.0f, scaledHeight));
+
+    keyboard.setScale(widthFactor, heightFactor);
     noteGrid.setScale(widthFactor, heightFactor);
     timeline.setScale(widthFactor, heightFactor);
   }
 
   void onScroll(SyncViewport *vp, const juce::Rectangle<int> &) {
-    auto range = vp->getHorizontalScrollBar().getCurrentRangeStart();
-    timelineViewPort.getHorizontalScrollBar().setCurrentRangeStart(range);
+    auto horizontalRange = vp->getHorizontalScrollBar().getCurrentRangeStart();
+    timelineViewPort.getHorizontalScrollBar().setCurrentRangeStart(horizontalRange);
+    auto verticalRange = vp->getVerticalScrollBar().getCurrentRangeStart();
+    keyboardViewPort.getVerticalScrollBar().setCurrentRangeStart(verticalRange);
   }
 
   [[nodiscard]] int getBarWidth() const {

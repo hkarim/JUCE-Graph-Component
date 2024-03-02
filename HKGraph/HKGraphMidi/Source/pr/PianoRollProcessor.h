@@ -68,10 +68,6 @@ struct PianoRollProcessor : public NodeProcessor {
         sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
       m_constrains.setMinimumSize(200, 200);
 
-//      pianoRoll.setSize(
-//        pianoRoll.getBars() * pianoRoll.getBarWidth(),
-//        127 * pianoRoll.getLaneHeight());
-
       addAndMakeVisible(pianoRoll);
 
       sliderNoteGridLaneHeight.setRange(1.0f, 4.0f, 0.1f);
@@ -109,6 +105,7 @@ struct PianoRollProcessor : public NodeProcessor {
 
     void paint(juce::Graphics &g) override {
       g.fillAll(juce::Colour(theme.cNodeBackground));
+      //g.fillAll(juce::Colour(0x373A3E));
     }
 
     void resized() override {
