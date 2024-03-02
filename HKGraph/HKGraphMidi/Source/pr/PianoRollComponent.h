@@ -11,6 +11,12 @@
 
 struct PianoRollComponent : juce::Component {
 
+  static constexpr auto laneHeight = 7;
+  static constexpr auto barWidth = 120; // divisible by 2, 3, 4, 5
+  static constexpr auto bars = 32;
+  static constexpr auto nKeys = 128;
+
+  juce::AudioPlayHead::TimeSignature timeSignature{3, 4};
   TimelineComponent timeline;
   SyncViewport timelineViewPort;
   NoteGridComponent noteGrid;
@@ -20,9 +26,9 @@ struct PianoRollComponent : juce::Component {
 
   PianoRollComponent() :
     juce::Component(),
-    noteGrid(7, 128, 32, 64),
-    keyboard(7, 128) {
-    //addAndMakeVisible(timeline);
+    timeline(timeSignature, bars, barWidth),
+    noteGrid(timeSignature, laneHeight, nKeys, bars, barWidth),
+    keyboard(laneHeight, nKeys) {
     keyboardViewPort.setViewedComponent(&keyboard, false);
     keyboardViewPort.setScrollBarsShown(false, false, false, false);
     addAndMakeVisible(keyboardViewPort);
@@ -104,33 +110,6 @@ struct PianoRollComponent : juce::Component {
     keyboardViewPort.getVerticalScrollBar().setCurrentRangeStart(verticalRange);
   }
 
-  [[nodiscard]] int getBarWidth() const {
-    return barWidth;
-  }
-
-  void setBarWidth(int v) {
-    barWidth = v;
-    noteGrid.barWidth = v;
-  }
-
-  [[nodiscard]] int getLaneHeight() const {
-    return laneHeight;
-  }
-
-  void setLaneHeight(int v) {
-    laneHeight = v;
-    noteGrid.laneHeight = v;
-  }
-
-  [[nodiscard]] int getBars() const {
-    return bars;
-  }
-
-  void setBars(int v) {
-    bars = v;
-    noteGrid.bars = v;
-  }
-
   [[nodiscard]] int getQuantize() const {
     return quantize;
   }
@@ -143,9 +122,7 @@ struct PianoRollComponent : juce::Component {
 private:
   float scaledWidth{1.0f};
   float scaledHeight{1.0f};
-  int barWidth{64};
-  int laneHeight{8};
-  int bars{32};
+
   int quantize{1};
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PianoRollComponent)
 };
