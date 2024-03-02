@@ -89,13 +89,10 @@ struct PianoRollProcessor : public NodeProcessor {
       addAndMakeVisible(sliderNoteGridLaneHeight);
       addAndMakeVisible(sliderNoteGridBarWidth);
 
-      sliderNoteGridQuantize.setRange(pianoRoll.getQuantize(), 6, 1);
+      sliderNoteGridQuantize.setRange(2, 8, 2);
       sliderNoteGridQuantize.setTextBoxIsEditable(false);
       sliderNoteGridQuantize.onValueChange = [this]() {
-        pianoRoll.setQuantize(
-          static_cast<int>(
-            std::pow(2, static_cast<int>(std::ceil(sliderNoteGridQuantize.getValue()))))
-        );
+        pianoRoll.setQuantize(static_cast<int>(sliderNoteGridQuantize.getValue()));
         pianoRoll.repaint();
       };
       addAndMakeVisible(sliderNoteGridQuantize);

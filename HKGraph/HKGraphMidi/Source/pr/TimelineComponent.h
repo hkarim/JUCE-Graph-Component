@@ -5,14 +5,23 @@
 
 struct TimelineComponent : public juce::Component {
   juce::AudioPlayHead::TimeSignature timeSignature{};
+  float playHeadPosition{0.0f};
   int bars{32};
   int barWidth{64};
+  int quantize{2};
 
-  explicit TimelineComponent(juce::AudioPlayHead::TimeSignature ts, int numberOfBars, int gridBarWidth)
+  std::function<void(const juce::MouseEvent &)> onMouseDown;
+
+  explicit TimelineComponent(
+    juce::AudioPlayHead::TimeSignature ts,
+    int numberOfBars,
+    int gridBarWidth,
+    int quantization)
     : juce::Component(),
-    timeSignature(ts),
-    bars(numberOfBars),
-    barWidth(gridBarWidth) {}
+      timeSignature(ts),
+      bars(numberOfBars),
+      barWidth(gridBarWidth),
+      quantize(quantization) {}
 
   ~TimelineComponent() override = default;
 
@@ -28,6 +37,8 @@ struct TimelineComponent : public juce::Component {
     auto f = g.getCurrentFont();
     f.setHeight(8.0f);
     g.setFont(f);
+    auto sub = PianoRollTheme::calculateTicks(barWidth, quantize, timeSignature);
+    std::cout << "[Timeline::sub] " << sub << std::endl;
     while (i <= bars) {
       auto x = i * barWidth;
       // draw bar numbers
@@ -45,7 +56,6 @@ struct TimelineComponent : public juce::Component {
       g.restoreState(); // reset transform
 
       // draw quantize bar lines
-      auto sub = barWidth / timeSignature.numerator;
       for (auto j = 0; j < barWidth; j += sub) {
         auto alt = x % barWidth;
         auto delta = alt > 1 ? 25.0f : 15.0f;
@@ -58,6 +68,20 @@ struct TimelineComponent : public juce::Component {
       }
       ++i;
     }
+
+    // draw play head
+    g.setColour(juce::Colours::white);
+    g.fillRect(
+      playHeadPosition,
+      0.0f,
+      vBarSeparatorWidth,
+      static_cast<float>(bounds.getHeight())
+    );
+  }
+
+  void mouseDown(const juce::MouseEvent &e) override {
+    if (onMouseDown != nullptr)
+      onMouseDown(e);
   }
 
   void setScale(float widthFactor, float heightFactor) {

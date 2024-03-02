@@ -15,8 +15,9 @@ struct PianoRollComponent : juce::Component {
   static constexpr auto barWidth = 120; // divisible by 2, 3, 4, 5
   static constexpr auto bars = 32;
   static constexpr auto nKeys = 128;
+  int quantize{2};
 
-  juce::AudioPlayHead::TimeSignature timeSignature{3, 4};
+  juce::AudioPlayHead::TimeSignature timeSignature{4, 4};
   TimelineComponent timeline;
   SyncViewport timelineViewPort;
   NoteGridComponent noteGrid;
@@ -26,8 +27,8 @@ struct PianoRollComponent : juce::Component {
 
   PianoRollComponent() :
     juce::Component(),
-    timeline(timeSignature, bars, barWidth),
-    noteGrid(timeSignature, laneHeight, nKeys, bars, barWidth),
+    timeline(timeSignature, bars, barWidth, quantize),
+    noteGrid(timeSignature, laneHeight, nKeys, bars, barWidth, quantize),
     keyboard(laneHeight, nKeys) {
     keyboardViewPort.setViewedComponent(&keyboard, false);
     keyboardViewPort.setScrollBarsShown(false, false, false, false);
@@ -38,6 +39,9 @@ struct PianoRollComponent : juce::Component {
 
     timelineViewPort.setViewedComponent(&timeline, false);
     timelineViewPort.setScrollBarsShown(false, false, false, false);
+    timeline.onMouseDown = [this](const juce::MouseEvent &e) {
+      onTimelineMouseDown(e);
+    };
     addAndMakeVisible(timelineViewPort);
 
     noteGridViewPort.callback = [this](auto *vp, auto &r) -> void {
@@ -84,6 +88,7 @@ struct PianoRollComponent : juce::Component {
       bounds.getWidth() - keyboardWidth,
       bounds.getHeight() - timelineHeight // compensate for the timeline height
     );
+
   }
 
   void setScale(float widthFactor, float heightFactor) {
@@ -97,7 +102,6 @@ struct PianoRollComponent : juce::Component {
 
     timeline.setTransform(juce::AffineTransform().scaled(scaledWidth, 1.0f));
     keyboard.setTransform(juce::AffineTransform().scaled(1.0f, scaledHeight));
-
     keyboard.setScale(widthFactor, heightFactor);
     noteGrid.setScale(widthFactor, heightFactor);
     timeline.setScale(widthFactor, heightFactor);
@@ -110,6 +114,13 @@ struct PianoRollComponent : juce::Component {
     keyboardViewPort.getVerticalScrollBar().setCurrentRangeStart(verticalRange);
   }
 
+  void onTimelineMouseDown(const juce::MouseEvent &e) {
+    auto x = e.getPosition().toFloat().x;
+    timeline.playHeadPosition = x;
+    noteGrid.playHeadPosition = x;
+    repaint();
+  }
+
   [[nodiscard]] int getQuantize() const {
     return quantize;
   }
@@ -117,12 +128,14 @@ struct PianoRollComponent : juce::Component {
   void setQuantize(int v) {
     quantize = v;
     noteGrid.quantize = v;
+    timeline.quantize = v;
+    repaint();
   }
 
 private:
   float scaledWidth{1.0f};
   float scaledHeight{1.0f};
 
-  int quantize{1};
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PianoRollComponent)
 };

@@ -16,11 +16,12 @@ struct NoteGridComponent : juce::Component {
   const juce::Colour cSubBarFg{PianoRollTheme::vSubBarFg};
 
   juce::AudioPlayHead::TimeSignature timeSignature{};
+  float playHeadPosition{0.0f};
   int laneHeight{8};
   int nKeys{128};
   int bars{32};
   int barWidth{64};
-  int quantize{1};
+  int quantize{2};
   bool freeResize{false};
 
 
@@ -142,7 +143,7 @@ struct NoteGridComponent : juce::Component {
           auto xr = x + w;
           auto xs = parent->nearestBar(xr, 0);
           w = xs - x;
-          auto min = parent->barWidth / (parent->quantize * parent->timeSignature.numerator);
+          auto min = PianoRollTheme::calculateTicks(parent->barWidth, parent->quantize, parent->timeSignature);
           if (w >= min) {
             bounds.setBounds(x, yp, w, hp);
           } else {
@@ -156,14 +157,20 @@ struct NoteGridComponent : juce::Component {
 
   std::unique_ptr<NoteConstrainer> noteConstrainer;
 
-  NoteGridComponent(juce::AudioPlayHead::TimeSignature ts, int gridLaneHeight, int numberOfKeys, int numberOfBars,
-                    int gridBarWidth) :
+  NoteGridComponent(
+    juce::AudioPlayHead::TimeSignature ts,
+    int gridLaneHeight,
+    int numberOfKeys,
+    int numberOfBars,
+    int gridBarWidth,
+    int quantization) :
     juce::Component(),
     timeSignature(ts),
     laneHeight(gridLaneHeight),
     nKeys(numberOfKeys),
     bars(numberOfBars),
     barWidth(gridBarWidth),
+    quantize(quantization),
     mouseListener(new ChildrenMouseListener(this)),
     noteConstrainer(new NoteConstrainer(this)) {
     setSize(bars * barWidth, numberOfKeys * laneHeight);
@@ -194,6 +201,8 @@ struct NoteGridComponent : juce::Component {
     auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
     auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
     auto zeroBasedKeys = nKeys - 1;
+    auto sub = PianoRollTheme::calculateTicks(barWidth, quantize, timeSignature);
+    std::cout << "[NoteGrid::sub] " << sub << std::endl;
     while (i <= zeroBasedKeys) {
       auto n = zeroBasedKeys - i; // the note number
       auto r = n % 12;
@@ -220,7 +229,6 @@ struct NoteGridComponent : juce::Component {
         g.setColour(c);
         g.fillRect(
           static_cast<float>(x),
-          //static_cast<float>(y - PianoRollTheme::hLaneSeparatorHeight),
           static_cast<float>(static_cast<float>(y) - hLaneSeparatorHeight),
           static_cast<float>(w),
           hLaneSeparatorHeight);
@@ -247,7 +255,6 @@ struct NoteGridComponent : juce::Component {
       ++i;
       // draw quantize bar lines
       if (quantize > 1) {
-        auto sub = barWidth / (quantize * timeSignature.numerator);
         for (auto j = 1; j < barWidth; j += sub) {
           g.setColour(juce::Colour(cSubBarFg));
           x += sub;
@@ -259,6 +266,16 @@ struct NoteGridComponent : juce::Component {
         }
       }
     }
+
+    // draw play head
+    g.setColour(juce::Colours::white);
+    g.fillRect(
+      playHeadPosition,
+      0.0f,
+      PianoRollTheme::vBarSeparatorWidth / scaledWidth * 0.5f,
+      static_cast<float>(bounds.getHeight())
+    );
+
   }
 
   void resized() override {
@@ -383,7 +400,7 @@ struct NoteGridComponent : juce::Component {
 
   [[nodiscard]] int nearestBar(int x, int width) const {
     auto divisor = barWidth;
-    if (quantize > 1) divisor = barWidth / (quantize * timeSignature.numerator);
+    if (quantize > 1) divisor = PianoRollTheme::calculateTicks(barWidth, quantize, timeSignature);
     auto possibleBarNumber = x / divisor;
     auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;
