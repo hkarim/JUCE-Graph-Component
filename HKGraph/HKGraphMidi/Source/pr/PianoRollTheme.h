@@ -16,13 +16,4 @@ struct PianoRollTheme {
   static constexpr unsigned int noteUnselectedBg = 0xffb8744a;
   static constexpr float noteBorderWidth = 0.2f;
 
-  static int calculateTicks(int barWidth, int quantize, juce::AudioPlayHead::TimeSignature timeSignature) {
-    auto sub = quantize > 0 ? barWidth / (quantize * timeSignature.numerator) : 0;
-    // make sub divide barWidth
-    if (barWidth % sub != 0) {
-      ++sub;
-    }
-    return sub;
-  }
-
 };

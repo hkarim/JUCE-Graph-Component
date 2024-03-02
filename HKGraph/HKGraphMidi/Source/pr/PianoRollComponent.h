@@ -12,12 +12,12 @@
 struct PianoRollComponent : juce::Component {
 
   static constexpr auto laneHeight = 7;
-  static constexpr auto barWidth = 120; // divisible by 2, 3, 4, 5
-  static constexpr auto bars = 32;
+  static constexpr auto tickWidth = 2;
+  static constexpr auto bars = 8;
   static constexpr auto nKeys = 128;
-  int quantize{2};
+  int quantize{1};
 
-  juce::AudioPlayHead::TimeSignature timeSignature{4, 4};
+  juce::AudioPlayHead::TimeSignature timeSignature{3, 4};
   TimelineComponent timeline;
   SyncViewport timelineViewPort;
   NoteGridComponent noteGrid;
@@ -27,8 +27,8 @@ struct PianoRollComponent : juce::Component {
 
   PianoRollComponent() :
     juce::Component(),
-    timeline(timeSignature, bars, barWidth, quantize),
-    noteGrid(timeSignature, laneHeight, nKeys, bars, barWidth, quantize),
+    timeline(timeSignature, bars, tickWidth, quantize),
+    noteGrid(timeSignature, laneHeight, nKeys, bars, tickWidth, quantize),
     keyboard(laneHeight, nKeys) {
     keyboardViewPort.setViewedComponent(&keyboard, false);
     keyboardViewPort.setScrollBarsShown(false, false, false, false);

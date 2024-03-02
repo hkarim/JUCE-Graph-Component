@@ -72,13 +72,12 @@ struct PianoRollProcessor : public NodeProcessor {
 
       sliderNoteGridLaneHeight.setRange(1.0f, 4.0f, 0.1f);
       sliderNoteGridLaneHeight.setValue(1.0f);
-      sliderNoteGridBarWidth.setRange(1.0f, 4.0f, 0.1f);
+      sliderNoteGridBarWidth.setRange(0.3f, 4.0f, 0.1f);
       sliderNoteGridBarWidth.setValue(1.0f);
       auto onScaleChange = [this]() {
         auto xp = static_cast<float>(sliderNoteGridBarWidth.getValue());
         auto yp = static_cast<float>(sliderNoteGridLaneHeight.getValue());
         pianoRoll.setScale(xp, yp);
-
       };
 
       sliderNoteGridLaneHeight.setTextBoxIsEditable(false);
@@ -89,10 +88,12 @@ struct PianoRollProcessor : public NodeProcessor {
       addAndMakeVisible(sliderNoteGridLaneHeight);
       addAndMakeVisible(sliderNoteGridBarWidth);
 
-      sliderNoteGridQuantize.setRange(2, 8, 2);
+      sliderNoteGridQuantize.setRange(0, 4, 1);
       sliderNoteGridQuantize.setTextBoxIsEditable(false);
       sliderNoteGridQuantize.onValueChange = [this]() {
-        pianoRoll.setQuantize(static_cast<int>(sliderNoteGridQuantize.getValue()));
+        auto v = static_cast<int>(sliderNoteGridQuantize.getValue());
+        auto q = static_cast<int>(std::pow(2, v));
+        pianoRoll.setQuantize(q);
         pianoRoll.repaint();
       };
       addAndMakeVisible(sliderNoteGridQuantize);
