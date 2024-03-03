@@ -13,7 +13,7 @@ struct PianoRollComponent : juce::Component {
 
   static constexpr auto laneHeight = 7;
   static constexpr auto tickWidth = 2;
-  static constexpr auto bars = 8;
+  static constexpr auto bars = 32;
   static constexpr auto nKeys = 128;
   int quantize{1};
 

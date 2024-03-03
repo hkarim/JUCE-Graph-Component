@@ -27,7 +27,15 @@ struct Measure {
     return ticksPerBeat(quantize) * tickWidth;
   }
 
+  static int quantizedTicksPerBeat(int quantize) {
+    return 16 / ticksPerBeat(quantize);
+  }
+
   static int quantizedTickWidth(int tickWidth, int quantize) {
-    return (16 / ticksPerBeat(quantize)) * tickWidth;
+    return quantizedTicksPerBeat(quantize) * tickWidth;
+  }
+
+  static int quantizedTicksPerBar(const juce::AudioPlayHead::TimeSignature &ts, int quantize) {
+    return 16 / ticksPerBar(ts, quantize);
   }
 };
