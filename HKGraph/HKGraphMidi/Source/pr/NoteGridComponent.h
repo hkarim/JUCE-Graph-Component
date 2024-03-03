@@ -404,7 +404,7 @@ struct NoteGridComponent : juce::Component {
   }
 
   [[nodiscard]] int nearestBar(int x, int width) const {
-    auto divisor = Measure::quantizedTicksPerBeat(quantize);
+    auto divisor = Measure::quantizedTicksPerBeat(quantize) * 2;
     auto possibleBarNumber = x / divisor;
     auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;

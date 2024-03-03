@@ -17,7 +17,7 @@ struct PianoRollComponent : juce::Component {
   static constexpr auto nKeys = 128;
   int quantize{1};
 
-  juce::AudioPlayHead::TimeSignature timeSignature{3, 4};
+  juce::AudioPlayHead::TimeSignature timeSignature{4, 4};
   TimelineComponent timeline;
   SyncViewport timelineViewPort;
   NoteGridComponent noteGrid;
