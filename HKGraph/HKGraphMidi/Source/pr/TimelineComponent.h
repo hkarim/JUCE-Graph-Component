@@ -37,17 +37,26 @@ struct TimelineComponent : public juce::Component {
     auto f = g.getCurrentFont();
     f.setHeight(8.0f);
     g.setFont(f);
+
+
     auto x = 0;
     auto unitsPerBar = Measure::unitsPerBar(timeSignature);
     auto unitsPerBeat = Measure::unitsPerBeat(timeSignature);
     auto unitsPerQuantize = Measure::unitsPerQuantize(timeSignature, quantize);
-    std::cout << "t = " << static_cast<int>(timeSignature.numerator) << "/"
-              << static_cast<int>(timeSignature.denominator)
-              << ", quantize = " << quantize
-              << ", unitsPerBar = " << unitsPerBar
-              << ", unitsPerBeat = " << unitsPerBeat
-              << ", unitsPerQuantize = " << unitsPerQuantize << std::endl;
     for (auto bar = 0; bar < bars; ++bar) {
+      auto beat = 0;
+      // draw bar numbers
+      g.saveState(); // we are about to set a transform
+      auto at = juce::AffineTransform().scaled(1.0f / scaledWidth, 1.0f);
+      g.addTransform(at);
+      auto r = juce::Rectangle<float>(
+        static_cast<float>(static_cast<float>(x+unit) * scaledWidth),
+        4.f,
+        24.0f,
+        12.0f
+      );
+      g.drawText(juce::String(bar + 1), r, juce::Justification::top);
+      g.restoreState(); // reset transform
       for (auto u = 0; u < unitsPerBar; ++u) {
         auto onBar = u == 0;
         auto onBeat = u % unitsPerBeat == 0;
@@ -60,14 +69,26 @@ struct TimelineComponent : public juce::Component {
             vBarSeparatorWidth,
             static_cast<float>(bounds.getHeight()));
         } else if (onBeat) {
-          g.setColour(juce::Colours::black);
+          g.setColour(juce::Colours::white);
+          // draw beat numbers
+          g.saveState(); // we are about to set a transform
+          g.addTransform(at);
+          r = juce::Rectangle<float>(
+            static_cast<float>(static_cast<float>(x) * scaledWidth),
+            8.f,
+            24.0f,
+            12.0f
+          );
+          g.drawText(juce::String(bar + 1) + "." + juce::String(beat + 1), r, juce::Justification::top);
+          g.restoreState(); // reset transform
           g.fillRect(
             static_cast<float>(x),
             20.0f,
             vBarSeparatorWidth,
             static_cast<float>(bounds.getHeight()));
+          ++beat;
         } else if (onQuantize) {
-          g.setColour(juce::Colours::white);
+          g.setColour(juce::Colours::whitesmoke);
           g.fillRect(
             static_cast<float>(x),
             25.0f,
