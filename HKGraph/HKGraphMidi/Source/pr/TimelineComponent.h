@@ -5,18 +5,18 @@
 #include "Measure.h"
 
 struct TimelineComponent : public juce::Component {
-  Measure::FloatTimeSignature timeSignature{};
+  juce::AudioPlayHead::TimeSignature timeSignature{};
   float playHeadPosition{0.0f};
   int bars{32};
-  float unit{0.0f};
+  int unit{};
   int quantize{2};
 
   std::function<void(const juce::MouseEvent &)> onMouseDown;
 
   explicit TimelineComponent(
-    Measure::FloatTimeSignature ts,
+    juce::AudioPlayHead::TimeSignature ts,
     int numberOfBars,
-    float gridUnit,
+    int gridUnit,
     int quantization)
     : juce::Component(),
       timeSignature(ts),
@@ -37,23 +37,43 @@ struct TimelineComponent : public juce::Component {
     auto f = g.getCurrentFont();
     f.setHeight(8.0f);
     g.setFont(f);
-    auto x = 0.0f;
-    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
-    auto beats = unitsPerBar / static_cast<int>(timeSignature.numerator);
-    std::cout << "unitsPerBar = " << unitsPerBar << ", quantize = " << quantize << ", unit = " << unit << std::endl;
+    auto x = 0;
+    auto unitsPerBar = Measure::unitsPerBar(timeSignature);
+    auto unitsPerBeat = Measure::unitsPerBeat(timeSignature);
+    auto unitsPerQuantize = Measure::unitsPerQuantize(timeSignature, quantize);
+    std::cout << "t = " << static_cast<int>(timeSignature.numerator) << "/"
+              << static_cast<int>(timeSignature.denominator)
+              << ", quantize = " << quantize
+              << ", unitsPerBar = " << unitsPerBar
+              << ", unitsPerBeat = " << unitsPerBeat
+              << ", unitsPerQuantize = " << unitsPerQuantize << std::endl;
     for (auto bar = 0; bar < bars; ++bar) {
-      for (auto q = 0; q < unitsPerBar; ++q) {
-        auto onBar = q == 0;
-        auto onBeat = q % beats == 0;
-        if (onBeat && !onBar)
-          g.setColour(juce::Colours::black);
-        else
+      for (auto u = 0; u < unitsPerBar; ++u) {
+        auto onBar = u == 0;
+        auto onBeat = u % unitsPerBeat == 0;
+        auto onQuantize = u % unitsPerQuantize == 0;
+        if (onBar) {
           g.setColour(juce::Colours::white);
-        g.fillRect(
-          static_cast<float>(x),
-          onBar ? 10.0f : 20.0f,
-          vBarSeparatorWidth,
-          static_cast<float>(bounds.getHeight()));
+          g.fillRect(
+            static_cast<float>(x),
+            10.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        } else if (onBeat) {
+          g.setColour(juce::Colours::black);
+          g.fillRect(
+            static_cast<float>(x),
+            20.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        } else if (onQuantize) {
+          g.setColour(juce::Colours::white);
+          g.fillRect(
+            static_cast<float>(x),
+            25.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        }
         x += unit;
       }
     }

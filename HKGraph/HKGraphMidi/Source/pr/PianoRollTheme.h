@@ -6,8 +6,9 @@ struct PianoRollTheme {
 
   static constexpr unsigned int hWhiteLanesSeparatorFg = 0xff1f2123;
   static constexpr unsigned int hOctaveLanesSeparatorFg = 0xff3a3d42;
-  static constexpr unsigned int vBarSeparatorFg = 0xff3a3d42;
-  static constexpr unsigned int vSubBarFg = 0xff33363a;
+  static constexpr unsigned int vBarFg = 0xff44484C;
+  static constexpr unsigned int vBeatFg = 0xff3A3D42;
+  static constexpr unsigned int vQuantizeFg = 0xff313439;
 
   static constexpr int hLaneSeparatorHeight = 1;
   static constexpr int vBarSeparatorWidth = 1;

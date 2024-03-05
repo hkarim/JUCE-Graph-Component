@@ -13,18 +13,18 @@ struct NoteGridComponent : juce::Component {
   const juce::Colour cBlackKeysBg{PianoRollTheme::blackKeysBg};
   const juce::Colour cWhiteLanesLineFg{PianoRollTheme::hWhiteLanesSeparatorFg};
   const juce::Colour cOctaveLanesSeparatorFg{PianoRollTheme::hOctaveLanesSeparatorFg};
-  const juce::Colour cBarSeparatorFg{PianoRollTheme::vBarSeparatorFg};
-  const juce::Colour cSubBarFg{PianoRollTheme::vSubBarFg};
+  const juce::Colour cBarFg{PianoRollTheme::vBarFg};
+  const juce::Colour cBeatFg{PianoRollTheme::vBeatFg};
+  const juce::Colour cQuantizeFg{PianoRollTheme::vQuantizeFg};
 
-  Measure::FloatTimeSignature timeSignature{};
+  juce::AudioPlayHead::TimeSignature timeSignature{};
   float playHeadPosition{0.0f};
   int laneHeight{8};
   int nKeys{128};
   int bars{32};
-  float unit{0.0f};
+  int unit{};
   int quantize{1};
   bool freeResize{false};
-
 
   const juce::MouseCursor rightEdgeResizeCursor{juce::MouseCursor::StandardCursorType::RightEdgeResizeCursor};
   const juce::MouseCursor leftEdgeResizeCursor{juce::MouseCursor::StandardCursorType::LeftEdgeResizeCursor};
@@ -131,7 +131,7 @@ struct NoteGridComponent : juce::Component {
         }
       } else {
         // snap
-        auto min = Measure::quantizeTickWidth(parent->timeSignature, parent->quantize, parent->unit);
+        auto min = Measure::quantizeWidth(parent->timeSignature, parent->quantize, parent->unit);
         if (isStretchingLeft) {
           auto xs = parent->nearestBar(x, w);
           auto xr = x + w;
@@ -144,7 +144,7 @@ struct NoteGridComponent : juce::Component {
           auto xr = x + w;
           auto xs = parent->nearestBar(xr, 0);
           w = xs - x;
-          if (static_cast<float>(w) >= min) {
+          if (w >= min) {
             bounds.setBounds(x, yp, w, hp);
           } else {
             bounds.setBounds(xp, yp, wp, hp);
@@ -157,11 +157,11 @@ struct NoteGridComponent : juce::Component {
   std::unique_ptr<NoteConstrainer> noteConstrainer;
 
   NoteGridComponent(
-    Measure::FloatTimeSignature ts,
+    juce::AudioPlayHead::TimeSignature ts,
     int gridLaneHeight,
     int numberOfKeys,
     int numberOfBars,
-    float gridUnit,
+    int gridUnit,
     int quantization) :
     juce::Component(),
     timeSignature(ts),
@@ -202,8 +202,6 @@ struct NoteGridComponent : juce::Component {
     auto vBarSeparatorWidth = PianoRollTheme::vBarSeparatorWidth / scaledWidth;
     auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
     auto zeroBasedKeys = nKeys - 1;
-    auto beatsPerBar = Measure::beatsPerBar(timeSignature);
-    auto beatWidth = Measure::beatWidth(timeSignature, unit);
 
     while (i <= zeroBasedKeys) {
       auto n = zeroBasedKeys - i; // the note number
@@ -251,14 +249,36 @@ struct NoteGridComponent : juce::Component {
       ++i;
     }
 
-    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
+    auto unitsPerBar = Measure::unitsPerBar(timeSignature);
+    auto unitsPerBeat = Measure::unitsPerBeat(timeSignature);
+    auto unitsPerQuantize = Measure::unitsPerQuantize(timeSignature, quantize);
     for (auto bar = 0; bar < bars; ++bar) {
-      for (auto q = 0; q < unitsPerBar; ++q) {
-        g.fillRect(
-          static_cast<float>(x),
-          0.0f,
-          vBarSeparatorWidth,
-          static_cast<float>(bounds.getHeight()));
+      for (auto u = 0; u < unitsPerBar; ++u) {
+        auto onBar = u == 0;
+        auto onBeat = u % unitsPerBeat == 0;
+        auto onQuantize = u % unitsPerQuantize == 0;
+        if (onBar) {
+          g.setColour(cBarFg);
+          g.fillRect(
+            static_cast<float>(x),
+            0.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        } else if (onBeat) {
+          g.setColour(cBeatFg);
+          g.fillRect(
+            static_cast<float>(x),
+            0.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        } else if (onQuantize) {
+          g.setColour(cQuantizeFg);
+          g.fillRect(
+            static_cast<float>(x),
+            0.0f,
+            vBarSeparatorWidth,
+            static_cast<float>(bounds.getHeight()));
+        }
         x += unit;
       }
     }
@@ -395,7 +415,7 @@ struct NoteGridComponent : juce::Component {
   }
 
   [[nodiscard]] int nearestBar(int x, int width) const {
-    auto divisor = Measure::quantizeTicksPerBeatInt(timeSignature, quantize) * 2;
+    auto divisor = Measure::quantizeWidth(timeSignature, quantize, unit);
     auto possibleBarNumber = x / divisor;
     auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;
@@ -408,8 +428,7 @@ struct NoteGridComponent : juce::Component {
     auto position = relativeEvent.getPosition();
     auto n = new NoteComponent(noteConstrainer.get());
     n->addMouseListener(mouseListener.get(), false);
-    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
-    auto barWidth = unitsPerBar * static_cast<int>(unit);
+    auto barWidth = Measure::barWidth(timeSignature, unit);
     n->setBounds(nearestBar(position.x, barWidth), nearestLane(position.y), barWidth, laneHeight);
     updateNoteModel(n);
     n->callback = [this](NoteComponent *, bool freeResizeOn) {

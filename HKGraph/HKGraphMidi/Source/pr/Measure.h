@@ -3,48 +3,46 @@
 #include "JuceHeader.h"
 
 struct Measure {
-  struct FloatTimeSignature {
-    float numerator{};
-    float denominator{};
 
-    static FloatTimeSignature make(juce::AudioPlayHead::TimeSignature &ts) {
-      return {
-        .numerator = static_cast<float>(ts.numerator),
-        .denominator = static_cast<float>(ts.denominator),
-      };
+  static int beatsPerBar(const juce::AudioPlayHead::TimeSignature &ts) {
+    return ts.numerator;
+  }
+
+  static int unitsPerBar(const juce::AudioPlayHead::TimeSignature &ts) {
+    return (ts.numerator * 64) / ts.denominator;
+  }
+
+  static int unitsPerBeat(const juce::AudioPlayHead::TimeSignature &ts) {
+    return unitsPerBar(ts) / beatsPerBar(ts);
+  }
+
+  static int unitsPerQuantize(const juce::AudioPlayHead::TimeSignature &ts, int quantize) {
+    auto q = quantize;
+    auto upb = unitsPerBar(ts);
+    auto upe = unitsPerBeat(ts);
+    while (upb % q != 0) {
+      q = q / 2;
     }
-  };
-
-  static int beatsPerBar(const FloatTimeSignature& ts) {
-    return static_cast<int>(ts.numerator);
+    auto result = upb / q;
+    while (upe % result != 0) {
+      result -= 1;
+    }
+    if (result <= 0) {
+      result = upb;
+    }
+    return result;
   }
 
-  static float unitsPerBar(const FloatTimeSignature &ts) {
-    return ts.numerator / ts.denominator;
-  }
-
-  static float unitsPerBeat(const FloatTimeSignature &ts) {
-    return unitsPerBar(ts) / static_cast<float>((beatsPerBar(ts)));
-  }
-
-  static float beatWidth(const FloatTimeSignature &ts, float unit) {
-    return unitsPerBeat(ts) * unit;
-  }
-
-  static float barWidth(const FloatTimeSignature &ts, float unit) {
+  static int barWidth(const juce::AudioPlayHead::TimeSignature &ts, int unit) {
     return unitsPerBar(ts) * unit;
   }
 
-  static float quantizeTicksPerBeat(const FloatTimeSignature &ts, int quantize) {
-    return static_cast<float>(quantize) / static_cast<float>(beatsPerBar(ts));
+  static int beatWidth(const juce::AudioPlayHead::TimeSignature &ts, int unit) {
+    return unitsPerBeat(ts) * unit;
   }
 
-  static int quantizeTicksPerBeatInt(const FloatTimeSignature &ts, int quantize) {
-    return static_cast<int>(quantizeTicksPerBeat(ts, quantize));
-  }
-
-  static float quantizeTickWidth(const FloatTimeSignature &ts, int quantize, float unit) {
-    return (unitsPerBar(ts) / static_cast<float>(quantize)) * unit;
+  static int quantizeWidth(const juce::AudioPlayHead::TimeSignature &ts, int quantize, int unit) {
+    return unitsPerQuantize(ts, quantize) * unit;
   }
 
 };
