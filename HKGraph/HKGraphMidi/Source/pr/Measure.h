@@ -3,39 +3,48 @@
 #include "JuceHeader.h"
 
 struct Measure {
-  static int beatsPerBar(const juce::AudioPlayHead::TimeSignature &ts) {
-    return ts.numerator;
+  struct FloatTimeSignature {
+    float numerator{};
+    float denominator{};
+
+    static FloatTimeSignature make(juce::AudioPlayHead::TimeSignature &ts) {
+      return {
+        .numerator = static_cast<float>(ts.numerator),
+        .denominator = static_cast<float>(ts.denominator),
+      };
+    }
+  };
+
+  static int beatsPerBar(const FloatTimeSignature& ts) {
+    return static_cast<int>(ts.numerator);
   }
 
-  static int ticksPerBeat(int quantize) {
-    return std::min(quantize, 16);
+  static float unitsPerBar(const FloatTimeSignature &ts) {
+    return ts.numerator / ts.denominator;
   }
 
-  static int ticksPerBar(const juce::AudioPlayHead::TimeSignature &ts, int quantize) {
-    return beatsPerBar(ts) * ticksPerBeat(quantize);
+  static float unitsPerBeat(const FloatTimeSignature &ts) {
+    return unitsPerBar(ts) / static_cast<float>((beatsPerBar(ts)));
   }
 
-  static int beatWidth(int tickWidth) {
-    return tickWidth * 16;
+  static float beatWidth(const FloatTimeSignature &ts, float unit) {
+    return unitsPerBeat(ts) * unit;
   }
 
-  static int barWidth(int tickWidth, const juce::AudioPlayHead::TimeSignature &ts) {
-    return beatWidth(tickWidth) * beatsPerBar(ts);
+  static float barWidth(const FloatTimeSignature &ts, float unit) {
+    return unitsPerBar(ts) * unit;
   }
 
-  static int minimumNoteWidth(int tickWidth, int quantize) {
-    return ticksPerBeat(quantize) * tickWidth;
+  static float quantizeTicksPerBeat(const FloatTimeSignature &ts, int quantize) {
+    return static_cast<float>(quantize) / static_cast<float>(beatsPerBar(ts));
   }
 
-  static int quantizedTicksPerBeat(int quantize) {
-    return 16 / ticksPerBeat(quantize);
+  static int quantizeTicksPerBeatInt(const FloatTimeSignature &ts, int quantize) {
+    return static_cast<int>(quantizeTicksPerBeat(ts, quantize));
   }
 
-  static int quantizedTickWidth(int tickWidth, int quantize) {
-    return quantizedTicksPerBeat(quantize) * tickWidth;
+  static float quantizeTickWidth(const FloatTimeSignature &ts, int quantize, float unit) {
+    return (unitsPerBar(ts) / static_cast<float>(quantize)) * unit;
   }
 
-  static int quantizedTicksPerBar(const juce::AudioPlayHead::TimeSignature &ts, int quantize) {
-    return 16 / ticksPerBar(ts, quantize);
-  }
 };

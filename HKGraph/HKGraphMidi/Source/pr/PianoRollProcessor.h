@@ -59,13 +59,20 @@ struct PianoRollProcessor : public NodeProcessor {
     juce::Slider sliderNoteGridBarWidth;
     juce::Slider sliderNoteGridQuantize;
 
+    juce::Slider sliderTimeSignatureNumerator;
+    juce::Slider sliderTimeSignatureDenominator;
+
+    juce::Label labelTimeSignature{};
+
     Panel(PianoRollProcessor *p, const GraphViewTheme &viewTheme)
       : ConstrainedComponent(),
         processor(p),
         theme(viewTheme),
         sliderNoteGridLaneHeight(juce::Slider::LinearBar, juce::Slider::NoTextBox),
         sliderNoteGridBarWidth(juce::Slider::LinearBar, juce::Slider::NoTextBox),
-        sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
+        sliderNoteGridQuantize(juce::Slider::LinearBar, juce::Slider::NoTextBox),
+        sliderTimeSignatureNumerator(juce::Slider::LinearBar, juce::Slider::NoTextBox),
+        sliderTimeSignatureDenominator(juce::Slider::LinearBar, juce::Slider::NoTextBox) {
       m_constrains.setMinimumSize(200, 200);
 
       addAndMakeVisible(pianoRoll);
@@ -88,7 +95,8 @@ struct PianoRollProcessor : public NodeProcessor {
       addAndMakeVisible(sliderNoteGridLaneHeight);
       addAndMakeVisible(sliderNoteGridBarWidth);
 
-      sliderNoteGridQuantize.setRange(0, 4, 1);
+      sliderNoteGridQuantize.setRange(0, 6, 1);
+      sliderNoteGridQuantize.setValue(4);
       sliderNoteGridQuantize.setTextBoxIsEditable(false);
       sliderNoteGridQuantize.onValueChange = [this]() {
         auto v = static_cast<int>(sliderNoteGridQuantize.getValue());
@@ -97,6 +105,29 @@ struct PianoRollProcessor : public NodeProcessor {
         pianoRoll.repaint();
       };
       addAndMakeVisible(sliderNoteGridQuantize);
+
+      // Time Signature
+      auto onTimeSignatureChange = [this]() {
+        auto n = static_cast<int>(sliderTimeSignatureNumerator.getValue());
+        auto d = static_cast<int>(sliderTimeSignatureDenominator.getValue());
+        d = static_cast<int>(std::pow(2, d));
+        pianoRoll.setTimeSignature(n, d);
+        labelTimeSignature.setText(juce::String(n) + "/" + juce::String(d), juce::NotificationType::dontSendNotification);
+        pianoRoll.repaint();
+      };
+      sliderTimeSignatureNumerator.setRange(1, 32, 1);
+      sliderTimeSignatureNumerator.setValue(4.0f);
+      sliderTimeSignatureNumerator.setTextBoxIsEditable(false);
+      sliderTimeSignatureNumerator.onValueChange = onTimeSignatureChange;
+      addAndMakeVisible(sliderTimeSignatureNumerator);
+
+      sliderTimeSignatureDenominator.setRange(1, 5, 1); // 2's exponent
+      sliderTimeSignatureDenominator.setValue(2); // 2^2
+      sliderTimeSignatureDenominator.setTextBoxIsEditable(false);
+      sliderTimeSignatureDenominator.onValueChange = onTimeSignatureChange;
+      addAndMakeVisible(sliderTimeSignatureDenominator);
+
+      addAndMakeVisible(labelTimeSignature);
     }
 
     ~Panel() override = default;
@@ -160,6 +191,35 @@ struct PianoRollProcessor : public NodeProcessor {
           .withMaxWidth(40.0f)
           .withFlex(0.2f)
           .withMargin(margin));
+      controls.items.add(
+        juce::FlexItem(sliderTimeSignatureNumerator)
+          .withAlignSelf(juce::FlexItem::AlignSelf::flexEnd)
+          .withMinHeight(10.0f)
+          .withMaxHeight(10.0f)
+          .withMinWidth(40.0f)
+          .withMaxWidth(40.0f)
+          .withFlex(0.2f)
+          .withMargin(margin));
+      controls.items.add(
+        juce::FlexItem(sliderTimeSignatureDenominator)
+          .withAlignSelf(juce::FlexItem::AlignSelf::flexEnd)
+          .withMinHeight(10.0f)
+          .withMaxHeight(10.0f)
+          .withMinWidth(40.0f)
+          .withMaxWidth(40.0f)
+          .withFlex(0.2f)
+          .withMargin(margin));
+      controls.items.add(
+        juce::FlexItem(labelTimeSignature)
+          .withAlignSelf(juce::FlexItem::AlignSelf::flexEnd)
+          .withMinHeight(10.0f)
+          .withMaxHeight(10.0f)
+          .withMinWidth(40.0f)
+          .withMaxWidth(40.0f)
+          .withFlex(0.2f)
+          .withMargin(margin));
+
+
 
       fb.items.add(
         juce::FlexItem(controls)

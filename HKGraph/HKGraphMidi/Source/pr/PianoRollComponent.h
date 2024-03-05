@@ -12,12 +12,12 @@
 struct PianoRollComponent : juce::Component {
 
   static constexpr auto laneHeight = 7;
-  static constexpr auto tickWidth = 2;
+  static constexpr auto unit = 2.0f;
   static constexpr auto bars = 32;
   static constexpr auto nKeys = 128;
   int quantize{1};
 
-  juce::AudioPlayHead::TimeSignature timeSignature{4, 4};
+  Measure::FloatTimeSignature timeSignature{4.0f, 4.0f};
   TimelineComponent timeline;
   SyncViewport timelineViewPort;
   NoteGridComponent noteGrid;
@@ -27,8 +27,8 @@ struct PianoRollComponent : juce::Component {
 
   PianoRollComponent() :
     juce::Component(),
-    timeline(timeSignature, bars, tickWidth, quantize),
-    noteGrid(timeSignature, laneHeight, nKeys, bars, tickWidth, quantize),
+    timeline(timeSignature, bars, unit, quantize),
+    noteGrid(timeSignature, laneHeight, nKeys, bars, unit, quantize),
     keyboard(laneHeight, nKeys) {
     keyboardViewPort.setViewedComponent(&keyboard, false);
     keyboardViewPort.setScrollBarsShown(false, false, false, false);
@@ -105,6 +105,15 @@ struct PianoRollComponent : juce::Component {
     keyboard.setScale(widthFactor, heightFactor);
     noteGrid.setScale(widthFactor, heightFactor);
     timeline.setScale(widthFactor, heightFactor);
+  }
+
+  void setTimeSignature(int numerator, int denominator) {
+    timeSignature.numerator = static_cast<float>(numerator);
+    timeSignature.denominator = static_cast<float>(denominator);
+    noteGrid.timeSignature.numerator = static_cast<float>(numerator);
+    noteGrid.timeSignature.denominator =static_cast<float>(denominator);
+    timeline.timeSignature.numerator = static_cast<float>(numerator);
+    timeline.timeSignature.denominator =static_cast<float>(denominator);
   }
 
   void onScroll(SyncViewport *vp, const juce::Rectangle<int> &) {

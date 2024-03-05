@@ -16,12 +16,12 @@ struct NoteGridComponent : juce::Component {
   const juce::Colour cBarSeparatorFg{PianoRollTheme::vBarSeparatorFg};
   const juce::Colour cSubBarFg{PianoRollTheme::vSubBarFg};
 
-  juce::AudioPlayHead::TimeSignature timeSignature{};
+  Measure::FloatTimeSignature timeSignature{};
   float playHeadPosition{0.0f};
   int laneHeight{8};
   int nKeys{128};
   int bars{32};
-  int tickWidth{8};
+  float unit{0.0f};
   int quantize{1};
   bool freeResize{false};
 
@@ -126,12 +126,12 @@ struct NoteGridComponent : juce::Component {
       }
 
       if (parent->freeResize) {
-        if (w < parent->tickWidth) {
+        if (w < static_cast<int>(parent->unit)) {
           bounds.setBounds(xp, yp, wp, hp);
         }
       } else {
         // snap
-        auto min = Measure::minimumNoteWidth(parent->tickWidth, parent->quantize);
+        auto min = Measure::quantizeTickWidth(parent->timeSignature, parent->quantize, parent->unit);
         if (isStretchingLeft) {
           auto xs = parent->nearestBar(x, w);
           auto xr = x + w;
@@ -144,7 +144,7 @@ struct NoteGridComponent : juce::Component {
           auto xr = x + w;
           auto xs = parent->nearestBar(xr, 0);
           w = xs - x;
-          if (w >= min) {
+          if (static_cast<float>(w) >= min) {
             bounds.setBounds(x, yp, w, hp);
           } else {
             bounds.setBounds(xp, yp, wp, hp);
@@ -157,23 +157,25 @@ struct NoteGridComponent : juce::Component {
   std::unique_ptr<NoteConstrainer> noteConstrainer;
 
   NoteGridComponent(
-    juce::AudioPlayHead::TimeSignature ts,
+    Measure::FloatTimeSignature ts,
     int gridLaneHeight,
     int numberOfKeys,
     int numberOfBars,
-    int gridTickWidth,
+    float gridUnit,
     int quantization) :
     juce::Component(),
     timeSignature(ts),
     laneHeight(gridLaneHeight),
     nKeys(numberOfKeys),
     bars(numberOfBars),
-    tickWidth(gridTickWidth),
+    unit(gridUnit),
     quantize(quantization),
     mouseListener(new ChildrenMouseListener(this)),
     noteConstrainer(new NoteConstrainer(this)) {
-    auto barWidth = Measure::barWidth(tickWidth, ts);
-    setSize(bars * barWidth, numberOfKeys * laneHeight);
+    // TODO fix size
+    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
+    auto barWidth = unitsPerBar * static_cast<int>(unit);
+    setSize(bars * static_cast<int>(barWidth), numberOfKeys * laneHeight);
   }
 
   ~NoteGridComponent() override {
@@ -201,7 +203,7 @@ struct NoteGridComponent : juce::Component {
     auto hLaneSeparatorHeight = PianoRollTheme::hLaneSeparatorHeight / scaledHeight;
     auto zeroBasedKeys = nKeys - 1;
     auto beatsPerBar = Measure::beatsPerBar(timeSignature);
-    auto beatWidth = Measure::beatWidth(tickWidth);
+    auto beatWidth = Measure::beatWidth(timeSignature, unit);
 
     while (i <= zeroBasedKeys) {
       auto n = zeroBasedKeys - i; // the note number
@@ -216,7 +218,11 @@ struct NoteGridComponent : juce::Component {
 
       y = i * laneHeight;
       // fill the lane
-      g.fillRect(x, y, w, laneHeight);
+      g.fillRect(
+        static_cast<float>(x),
+        static_cast<float>(y),
+        static_cast<float>(w),
+        static_cast<float>(laneHeight));
 
       // if we have 2 consecutive white lanes, draw a separator on top of them, at the bottom of the first
       // note that we draw the notes in reverse order, top to bottom
@@ -235,40 +241,25 @@ struct NoteGridComponent : juce::Component {
 
         // draw the consecutive white lane
         g.setColour(cWhiteKeysBg);
-        g.fillRect(x, y, w, laneHeight);
+        g.fillRect(
+          static_cast<float>(x),
+          static_cast<float>(y),
+          static_cast<float>(w),
+          static_cast<float>(laneHeight));
       }
 
       ++i;
     }
 
-    // draw bars
-    for (auto bar = 0; bar <= bars; ++bar) {
-      for (auto beat = 0; beat < beatsPerBar; ++beat) {
-        g.setColour(juce::Colour(PianoRollTheme::vBarSeparatorFg));
-        // draw bar beats
+    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
+    for (auto bar = 0; bar < bars; ++bar) {
+      for (auto q = 0; q < unitsPerBar; ++q) {
         g.fillRect(
           static_cast<float>(x),
           0.0f,
           vBarSeparatorWidth,
           static_cast<float>(bounds.getHeight()));
-        // draw quantization ticks
-        if (quantize > 1) {
-          // quantization is one of 1, 2, 4, 8, 16
-          // we have 16 ticks per beat, so maximum number of ticks is 16
-          auto ticks = Measure::ticksPerBeat(quantize);
-          auto tw = Measure::quantizedTickWidth(tickWidth, quantize);
-          auto xt = x + tw;
-          g.setColour(juce::Colour(PianoRollTheme::vSubBarFg));
-          for (auto tick = 0; tick < ticks - 1 ; ++tick) {
-            g.fillRect(
-              static_cast<float>(xt),
-              0.0f,
-              vBarSeparatorWidth,
-              static_cast<float>(bounds.getHeight()));
-            xt += tw;
-          }
-        }
-        x += beatWidth;
+        x += unit;
       }
     }
 
@@ -404,7 +395,7 @@ struct NoteGridComponent : juce::Component {
   }
 
   [[nodiscard]] int nearestBar(int x, int width) const {
-    auto divisor = Measure::quantizedTicksPerBeat(quantize) * 2;
+    auto divisor = Measure::quantizeTicksPerBeatInt(timeSignature, quantize) * 2;
     auto possibleBarNumber = x / divisor;
     auto xp = possibleBarNumber * divisor;
     if (xp < 0) xp = 0;
@@ -417,7 +408,8 @@ struct NoteGridComponent : juce::Component {
     auto position = relativeEvent.getPosition();
     auto n = new NoteComponent(noteConstrainer.get());
     n->addMouseListener(mouseListener.get(), false);
-    auto barWidth = Measure::barWidth(tickWidth, timeSignature);
+    auto unitsPerBar = (static_cast<int>(timeSignature.numerator) * 64) / static_cast<int>(timeSignature.denominator);
+    auto barWidth = unitsPerBar * static_cast<int>(unit);
     n->setBounds(nearestBar(position.x, barWidth), nearestLane(position.y), barWidth, laneHeight);
     updateNoteModel(n);
     n->callback = [this](NoteComponent *, bool freeResizeOn) {
